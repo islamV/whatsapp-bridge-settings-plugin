@@ -68,6 +68,76 @@ class WhatsappBridge implements WhatsappProviderInterface
         return $this->sendMessage($to, $message, $options);
     }
 
+    public function getConnectionStatus(): array
+    {
+        $settings = app(WhatsappSettingsRepository::class);
+
+        if (! $settings->get('api_base_url') || ! $settings->get('api_token')) {
+            return [
+                'connected' => false,
+                'status' => 'not_configured',
+                'message' => 'WhatsApp bridge is not configured.',
+            ];
+        }
+
+        try {
+            $response = Http::timeout((int) ($settings->get('timeout', 30)))
+                ->withToken((string) $settings->get('api_token'))
+                ->get(rtrim((string) $settings->get('api_base_url'), '/') . '/status');
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                return [
+                    'connected' => $data['connected'] ?? false,
+                    'status' => $data['status'] ?? 'unknown',
+                    'message' => $data['message'] ?? '',
+                ];
+            }
+
+            return [
+                'connected' => false,
+                'status' => 'error',
+                'message' => 'Failed to check connection status.',
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'connected' => false,
+                'status' => 'error',
+                'message' => 'Connection check failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    public function getQrCode(): ?string
+    {
+        $settings = app(WhatsappSettingsRepository::class);
+
+        if (! $settings->get('api_base_url') || ! $settings->get('api_token')) {
+            return null;
+        }
+
+        try {
+            $response = Http::timeout((int) ($settings->get('timeout', 30)))
+                ->withToken((string) $settings->get('api_token'))
+                ->get(rtrim((string) $settings->get('api_base_url'), '/') . '/qr');
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                return $data['qr'] ?? null;
+            }
+
+            return null;
+        } catch (\Throwable $e) {
+            Log::channel($this->logChannel($settings))->error('WhatsApp getQrCode exception', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
     protected function normalizePhone(string $phone, ?string $defaultCountryCode = null): string
     {
         $cleaned = preg_replace('/[^0-9]/', '', $phone) ?? '';

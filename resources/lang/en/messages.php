@@ -10,6 +10,8 @@ return [
         'api_configuration' => 'API Configuration',
         'message_settings' => 'Message Settings',
         'message_templates' => 'Message Templates',
+        'connection_status' => 'Connection Status',
+        'qr_code' => 'QR Code',
     ],
 
     'fields' => [
@@ -30,11 +32,16 @@ return [
         'otp_template' => 'OTP Message Template',
         'otp_template_placeholder' => 'Your verification code is: {otp}',
         'otp_template_helper' => 'Use {otp} as a placeholder for the OTP code.',
+        'status' => 'Status',
+        'status_message' => 'Status Message',
+        'qr_code' => 'QR Code',
+        'no_qr_code' => 'No QR code available. Check connection settings.',
     ],
 
     'actions' => [
         'save' => 'Save Settings',
         'send_test' => 'Send Test Message',
+        'refresh_status' => 'Refresh Status',
     ],
 
     'test_form' => [

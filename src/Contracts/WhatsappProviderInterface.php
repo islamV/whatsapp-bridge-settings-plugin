@@ -7,4 +7,8 @@ interface WhatsappProviderInterface
     public function sendMessage(string $to, string $message, array $options = []): bool;
 
     public function sendOtp(string $to, string $otp, array $options = []): bool;
+
+    public function getConnectionStatus(): array;
+
+    public function getQrCode(): ?string;
 }

@@ -10,6 +10,8 @@ return [
         'api_configuration' => 'إعدادات API',
         'message_settings' => 'إعدادات الرسائل',
         'message_templates' => 'قوالب الرسائل',
+        'connection_status' => 'حالة الاتصال',
+        'qr_code' => 'رمز QR',
     ],
 
     'fields' => [
@@ -30,11 +32,16 @@ return [
         'otp_template' => 'قالب رسالة OTP',
         'otp_template_placeholder' => 'رمز التحقق الخاص بك هو: {otp}',
         'otp_template_helper' => 'استخدم {otp} كمتغير لرمز OTP.',
+        'status' => 'الحالة',
+        'status_message' => 'رسالة الحالة',
+        'qr_code' => 'رمز QR',
+        'no_qr_code' => 'لا يوجد رمز QR متاح. تحقق من إعدادات الاتصال.',
     ],
 
     'actions' => [
         'save' => 'حفظ الإعدادات',
         'send_test' => 'إرسال رسالة اختبار',
+        'refresh_status' => 'تحديث الحالة',
     ],
 
     'test_form' => [
