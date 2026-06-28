@@ -8,7 +8,11 @@ interface WhatsappProviderInterface
 
     public function sendOtp(string $to, string $otp, array $options = []): bool;
 
-    public function getConnectionStatus(): array;
+    public function getConnectionStatus(): string;
 
-    public function getQrCode(): ?string;
+    public function generateQrCode(): ?string;
+
+    public function disconnect(): bool;
+
+    public function getConnectedPhone(): ?string;
 }

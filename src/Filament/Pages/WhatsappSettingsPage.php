@@ -6,7 +6,6 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -23,69 +22,20 @@ class WhatsappSettingsPage extends Page
 
     protected static ?int $navigationSort = 99;
 
+    protected static string $view = 'whatsapp-bridge-settings::filament.pages.whatsapp-settings';
+
     public ?array $data = [];
-
-    public ?array $connectionStatus = null;
-
-    public ?string $qrCode = null;
 
     public function mount(): void
     {
         $repository = app(WhatsappSettingsRepository::class);
         $this->form->fill($repository->safeSettings());
-        $this->refreshConnectionStatus();
     }
 
     public function form(Schema $form): Schema
     {
         return $form
             ->schema([
-                Section::make(__('whatsapp-bridge-settings::messages.sections.connection_status'))
-                    ->icon('heroicon-o-signal')
-                    ->schema([
-                       Infolist::make()
-                            ->schema([
-                                TextEntry::make('connection_status.status')
-                                    ->label(__('whatsapp-bridge-settings::messages.fields.status'))
-                                    ->badge()
-                                    ->color(fn (string $state): string => match ($state) {
-                                        'connected' => 'success',
-                                        'not_configured' => 'warning',
-                                        'error' => 'danger',
-                                        default => 'gray',
-                                    }),
-                                TextEntry::make('connection_status.message')
-                                    ->label(__('whatsapp-bridge-settings::messages.fields.status_message')),
-                            ])
-                            ->state([
-                                'connection_status' => $this->connectionStatus ?? [
-                                    'status' => 'unknown',
-                                    'message' => 'Click refresh to check status.',
-                                ],
-                            ]),
-                    ])
-                    ->collapsible(),
-
-                Section::make(__('whatsapp-bridge-settings::messages.sections.qr_code'))
-                    ->icon('heroicon-o-qr-code')
-                    ->schema([
-                        Infolist::make()
-                            ->schema([
-                                TextEntry::make('qr_code_display')
-                                    ->label(__('whatsapp-bridge-settings::messages.fields.qr_code'))
-                                    ->content(
-                                        $this->qrCode
-                                            ? '<img src="data:image/png;base64,' . e($this->qrCode) . '" alt="QR Code" style="max-width: 300px;" />'
-                                            : '<span class="text-gray-500">' . __('whatsapp-bridge-settings::messages.fields.no_qr_code') . '</span>'
-                                    )
-                                    ->html(),
-                            ])
-                            ->state([
-                                'qr_code_display' => $this->qrCode,
-                            ]),
-                    ])
-                    ->collapsible(),
-
                 Section::make(__('whatsapp-bridge-settings::messages.sections.api_configuration'))
                     ->columns(2)
                     ->schema([
@@ -154,13 +104,6 @@ class WhatsappSettingsPage extends Page
             ->statePath('data');
     }
 
-    public function refreshConnectionStatus(): void
-    {
-        $whatsapp = app(WhatsappProviderInterface::class);
-        $this->connectionStatus = $whatsapp->getConnectionStatus();
-        $this->qrCode = $whatsapp->getQrCode();
-    }
-
     protected function getFormActions(): array
     {
         return [
@@ -188,12 +131,6 @@ class WhatsappSettingsPage extends Page
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('refreshStatus')
-                ->label(__('whatsapp-bridge-settings::messages.actions.refresh_status'))
-                ->icon('heroicon-o-arrow-path')
-                ->color('info')
-                ->action(fn () => $this->refreshConnectionStatus()),
-
             Action::make('sendTestMessage')
                 ->label(__('whatsapp-bridge-settings::messages.actions.send_test'))
                 ->icon('heroicon-o-paper-airplane')

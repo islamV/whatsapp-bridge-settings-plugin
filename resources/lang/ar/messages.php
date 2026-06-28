@@ -10,8 +10,6 @@ return [
         'api_configuration' => 'إعدادات API',
         'message_settings' => 'إعدادات الرسائل',
         'message_templates' => 'قوالب الرسائل',
-        'connection_status' => 'حالة الاتصال',
-        'qr_code' => 'رمز QR',
     ],
 
     'fields' => [
@@ -32,16 +30,11 @@ return [
         'otp_template' => 'قالب رسالة OTP',
         'otp_template_placeholder' => 'رمز التحقق الخاص بك هو: {otp}',
         'otp_template_helper' => 'استخدم {otp} كمتغير لرمز OTP.',
-        'status' => 'الحالة',
-        'status_message' => 'رسالة الحالة',
-        'qr_code' => 'رمز QR',
-        'no_qr_code' => 'لا يوجد رمز QR متاح. تحقق من إعدادات الاتصال.',
     ],
 
     'actions' => [
         'save' => 'حفظ الإعدادات',
         'send_test' => 'إرسال رسالة اختبار',
-        'refresh_status' => 'تحديث الحالة',
     ],
 
     'test_form' => [
@@ -55,5 +48,23 @@ return [
         'saved' => 'تم حفظ إعدادات واتساب بنجاح.',
         'test_sent' => 'تم إرسال رسالة الاختبار بنجاح!',
         'test_failed' => 'فشل إرسال رسالة الاختبار. تحقق من السجلات للمزيد من التفاصيل.',
+    ],
+
+    'qr' => [
+        'qr_scan_title' => 'امسح رمز QR بتطبيق واتساب',
+        'qr_expires_in' => 'ينتهي صلاحية رمز QR خلال :count ثانية',
+        'qr_generating' => 'جاري إنشاء رمز QR...',
+        'disconnect' => 'قطع الاتصال',
+        'connected_title' => 'تم الاتصال بواتساب',
+        'connected_phone' => 'رقم الهاتف المتصل: :phone',
+        'disconnect_button' => 'قطع الاتصال',
+        'test_section_title' => 'إرسال رسالة اختبار',
+        'test_phone_label' => 'رقم الهاتف',
+        'test_phone_placeholder' => '201000000000',
+        'test_message_label' => 'الرسالة',
+        'test_sending' => 'جاري الإرسال...',
+        'test_send_button' => 'إرسال رسالة اختبار',
+        'connect_button' => 'ربط واتساب',
+        'description' => 'أنشئ رمز QR لربط حساب واتساب الخاص بك. افتح واتساب على هاتفك، اذهب إلى الإعدادات > الأجهزة المرتبطة > ربط جهاز.',
     ],
 ];

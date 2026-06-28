@@ -68,16 +68,12 @@ class WhatsappBridge implements WhatsappProviderInterface
         return $this->sendMessage($to, $message, $options);
     }
 
-    public function getConnectionStatus(): array
+    public function getConnectionStatus(): string
     {
         $settings = app(WhatsappSettingsRepository::class);
 
         if (! $settings->get('api_base_url') || ! $settings->get('api_token')) {
-            return [
-                'connected' => false,
-                'status' => 'not_configured',
-                'message' => 'WhatsApp bridge is not configured.',
-            ];
+            return 'disconnected';
         }
 
         try {
@@ -88,28 +84,16 @@ class WhatsappBridge implements WhatsappProviderInterface
             if ($response->successful()) {
                 $data = $response->json();
 
-                return [
-                    'connected' => $data['connected'] ?? false,
-                    'status' => $data['status'] ?? 'unknown',
-                    'message' => $data['message'] ?? '',
-                ];
+                return ($data['status'] ?? '') === 'connected' ? 'connected' : 'disconnected';
             }
 
-            return [
-                'connected' => false,
-                'status' => 'error',
-                'message' => 'Failed to check connection status.',
-            ];
+            return 'disconnected';
         } catch (\Throwable $e) {
-            return [
-                'connected' => false,
-                'status' => 'error',
-                'message' => 'Connection check failed: ' . $e->getMessage(),
-            ];
+            return 'disconnected';
         }
     }
 
-    public function getQrCode(): ?string
+    public function generateQrCode(): ?string
     {
         $settings = app(WhatsappSettingsRepository::class);
 
@@ -120,7 +104,7 @@ class WhatsappBridge implements WhatsappProviderInterface
         try {
             $response = Http::timeout((int) ($settings->get('timeout', 30)))
                 ->withToken((string) $settings->get('api_token'))
-                ->get(rtrim((string) $settings->get('api_base_url'), '/') . '/qr');
+                ->post(rtrim((string) $settings->get('api_base_url'), '/') . '/qr');
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -130,10 +114,58 @@ class WhatsappBridge implements WhatsappProviderInterface
 
             return null;
         } catch (\Throwable $e) {
-            Log::channel($this->logChannel($settings))->error('WhatsApp getQrCode exception', [
+            Log::channel($this->logChannel($settings))->error('WhatsApp generateQrCode exception', [
                 'message' => $e->getMessage(),
             ]);
 
+            return null;
+        }
+    }
+
+    public function disconnect(): bool
+    {
+        $settings = app(WhatsappSettingsRepository::class);
+
+        if (! $settings->get('api_base_url') || ! $settings->get('api_token')) {
+            return false;
+        }
+
+        try {
+            $response = Http::timeout((int) ($settings->get('timeout', 30)))
+                ->withToken((string) $settings->get('api_token'))
+                ->post(rtrim((string) $settings->get('api_base_url'), '/') . '/disconnect');
+
+            return $response->successful();
+        } catch (\Throwable $e) {
+            Log::channel($this->logChannel($settings))->error('WhatsApp disconnect exception', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    public function getConnectedPhone(): ?string
+    {
+        $settings = app(WhatsappSettingsRepository::class);
+
+        if (! $settings->get('api_base_url') || ! $settings->get('api_token')) {
+            return null;
+        }
+
+        try {
+            $response = Http::timeout((int) ($settings->get('timeout', 30)))
+                ->withToken((string) $settings->get('api_token'))
+                ->get(rtrim((string) $settings->get('api_base_url'), '/') . '/status');
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                return $data['phone'] ?? null;
+            }
+
+            return null;
+        } catch (\Throwable $e) {
             return null;
         }
     }

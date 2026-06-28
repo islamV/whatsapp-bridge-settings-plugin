@@ -1,3 +1,3 @@
 <div>
-    <livewire:whats-app-connector />
+    <livewire:whatsapp-connector />
 </div>

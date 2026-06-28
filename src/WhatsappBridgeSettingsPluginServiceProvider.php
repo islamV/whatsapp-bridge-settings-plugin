@@ -2,7 +2,9 @@
 
 namespace Islamv\WhatsappBridgeSettingsPlugin;
 
+use Livewire\Livewire;
 use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
+use Islamv\WhatsappBridgeSettingsPlugin\Livewire\WhatsappConnector;
 use Islamv\WhatsappBridgeSettingsPlugin\Services\WhatsappBridge;
 use Islamv\WhatsappBridgeSettingsPlugin\Services\WhatsappOtpSender;
 use Spatie\LaravelPackageTools\Package;
@@ -36,5 +38,8 @@ class WhatsappBridgeSettingsPluginServiceProvider extends PackageServiceProvider
         });
     }
 
-    public function packageBooted(): void {}
+    public function packageBooted(): void
+    {
+        Livewire::component('whatsapp-connector', WhatsappConnector::class);
+    }
 }
