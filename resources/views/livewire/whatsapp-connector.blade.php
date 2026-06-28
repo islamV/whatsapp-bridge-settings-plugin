@@ -1,24 +1,37 @@
 <div dir="rtl">
-    {{-- Flash message --}}
     @if (session('whatsapp-settings-saved'))
         <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-xl text-sm dark:bg-green-950/20 dark:border-green-800 dark:text-green-300">
             {{ session('whatsapp-settings-saved') }}
         </div>
     @endif
 
+    @php
+        $tabIcons = [
+            'general' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />',
+            'bridge' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />',
+            'meta' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />',
+            'twilio' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />',
+            'status' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />',
+        ];
+
+        $providerIcons = [
+            'link' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />',
+            'globe-alt' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />',
+            'cloud' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />',
+        ];
+
+        $tabLabels = [
+            'general' => __('whatsapp-bridge-settings::messages.tabs.general'),
+            'bridge' => __('whatsapp-bridge-settings::messages.tabs.bridge'),
+            'meta' => __('whatsapp-bridge-settings::messages.tabs.meta'),
+            'twilio' => __('whatsapp-bridge-settings::messages.tabs.twilio'),
+            'status' => __('whatsapp-bridge-settings::messages.tabs.status'),
+        ];
+    @endphp
+
     {{-- Tabs --}}
     <div class="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
-        @php
-            $tabs = [
-                'general' => ['label' => __('whatsapp-bridge-settings::messages.tabs.general'), 'icon' => 'heroicon-o-cog-6-tooth'],
-                'bridge' => ['label' => __('whatsapp-bridge-settings::messages.tabs.bridge'), 'icon' => 'heroicon-o-link'],
-                'meta' => ['label' => __('whatsapp-bridge-settings::messages.tabs.meta'), 'icon' => 'heroicon-o-globe-alt'],
-                'twilio' => ['label' => __('whatsapp-bridge-settings::messages.tabs.twilio'), 'icon' => 'heroicon-o-cloud'],
-                'status' => ['label' => __('whatsapp-bridge-settings::messages.tabs.status'), 'icon' => 'heroicon-o-signal'],
-            ];
-        @endphp
-
-        @foreach ($tabs as $key => $tab)
+        @foreach ($tabLabels as $key => $label)
             <button
                 wire:click="$set('activeTab', '{{ $key }}')"
                 type="button"
@@ -28,8 +41,10 @@
                         : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                     }}"
             >
-                <x-dynamic-component :component="$tab['icon']" class="w-4 h-4" />
-                {{ $tab['label'] }}
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    {!! $tabIcons[$key] !!}
+                </svg>
+                {{ $label }}
             </button>
         @endforeach
     </div>
@@ -37,7 +52,6 @@
     {{-- General Tab --}}
     @if ($activeTab === 'general')
         <div class="space-y-6">
-            {{-- Active Provider Selection --}}
             <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm">
                 <h3 class="text-md font-bold text-gray-800 dark:text-gray-200 mb-4">{{ __('whatsapp-bridge-settings::messages.general.select_provider') }}</h3>
 
@@ -63,7 +77,9 @@
                             <div class="flex flex-col items-center gap-2">
                                 <div class="w-12 h-12 rounded-full flex items-center justify-center
                                     {{ $activeProvider === $key ? 'bg-emerald-100 dark:bg-emerald-800/40 text-emerald-600 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400' }}">
-                                    <x-dynamic-component :component="$provider['icon']" class="w-6 h-6" />
+                                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        {!! $providerIcons[$provider['icon']] ?? '' !!}
+                                    </svg>
                                 </div>
                                 <span class="font-semibold text-sm {{ $activeProvider === $key ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-700 dark:text-gray-300' }}">
                                     {{ $provider['label'] }}
@@ -77,7 +93,6 @@
                 </div>
             </div>
 
-            {{-- General Settings --}}
             <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm space-y-4">
                 <h3 class="text-md font-bold text-gray-800 dark:text-gray-200">{{ __('whatsapp-bridge-settings::messages.general.settings') }}</h3>
 
@@ -119,7 +134,9 @@
         <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm space-y-4">
             <div class="flex items-center gap-3 mb-2">
                 <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                    <x-dynamic-component component="heroicon-o-link" class="w-5 h-5" />
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        {!! $providerIcons['link'] !!}
+                    </svg>
                 </div>
                 <div>
                     <h3 class="text-md font-bold text-gray-800 dark:text-gray-200">{{ __('whatsapp-bridge-settings::messages.bridge.title') }}</h3>
@@ -162,7 +179,9 @@
         <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm space-y-4">
             <div class="flex items-center gap-3 mb-2">
                 <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400">
-                    <x-dynamic-component component="heroicon-o-globe-alt" class="w-5 h-5" />
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        {!! $providerIcons['globe-alt'] !!}
+                    </svg>
                 </div>
                 <div>
                     <h3 class="text-md font-bold text-gray-800 dark:text-gray-200">{{ __('whatsapp-bridge-settings::messages.meta.title') }}</h3>
@@ -215,7 +234,9 @@
         <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm space-y-4">
             <div class="flex items-center gap-3 mb-2">
                 <div class="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center text-red-600 dark:text-red-400">
-                    <x-dynamic-component component="heroicon-o-cloud" class="w-5 h-5" />
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        {!! $providerIcons['cloud'] !!}
+                    </svg>
                 </div>
                 <div>
                     <h3 class="text-md font-bold text-gray-800 dark:text-gray-200">{{ __('whatsapp-bridge-settings::messages.twilio.title') }}</h3>
