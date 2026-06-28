@@ -21,6 +21,14 @@ class WhatsappSettingsRepository
         return $settings[$key] ?? $default;
     }
 
+    public function getProviderConfig(string $provider): array
+    {
+        $settings = $this->all();
+        $providers = $settings['providers'] ?? [];
+
+        return $providers[$provider] ?? [];
+    }
+
     public function all(): array
     {
         if ($this->settings !== null) {
@@ -31,11 +39,7 @@ class WhatsappSettingsRepository
 
         $configDefaults = $this->getConfigDefaults();
 
-        $merged = array_merge($configDefaults, $dbSettings);
-
-        if (isset($merged['api_token_raw'])) {
-            unset($merged['api_token_raw']);
-        }
+        $merged = $this->mergeDefaults($configDefaults, $dbSettings);
 
         $this->settings = $merged;
 
@@ -44,21 +48,22 @@ class WhatsappSettingsRepository
 
     public function save(array $data): void
     {
-        $token = $data['api_token'] ?? null;
-
         $existing = $this->getFromDb();
 
-        if ($token === null || $token === '') {
-            $token = $existing['api_token'] ?? null;
-        } else {
-            $token = Crypt::encryptString($token);
+        $activeProvider = $data['active_provider'] ?? $existing['active_provider'] ?? 'bridge';
+        $providers = $data['providers'] ?? $existing['providers'] ?? [];
+
+        if (isset($providers[$activeProvider])) {
+            $providers[$activeProvider] = $this->sanitizeProviderConfig(
+                $activeProvider,
+                $providers[$activeProvider],
+                $existing['providers'][$activeProvider] ?? []
+            );
         }
 
         $record = [
+            'active_provider' => $activeProvider,
             'provider_name' => $data['provider_name'] ?? $existing['provider_name'] ?? 'default',
-            'api_base_url' => $data['api_base_url'] ?? $existing['api_base_url'] ?? null,
-            'api_token' => $token,
-            'sender' => $data['sender'] ?? $existing['sender'] ?? null,
             'default_country_code' => $data['default_country_code'] ?? $existing['default_country_code'] ?? '20',
             'otp_enabled' => $data['otp_enabled'] ?? $existing['otp_enabled'] ?? true,
             'messages_enabled' => $data['messages_enabled'] ?? $existing['messages_enabled'] ?? true,
@@ -68,6 +73,9 @@ class WhatsappSettingsRepository
                 ? json_encode($data['extra_settings'])
                 : ($existing['extra_settings'] ?? null),
         ];
+
+        $this->migrateLegacyFields($record, $existing, $providers);
+        $record['providers'] = json_encode($providers);
 
         $count = DB::table(self::TABLE)->count();
 
@@ -85,13 +93,10 @@ class WhatsappSettingsRepository
     {
         $settings = $this->all();
 
-        if (isset($settings['api_token']) && $settings['api_token'] !== null) {
-            $token = (string) $settings['api_token'];
-            $settings['api_token'] = $this->maskToken($token);
-            $settings['has_token'] = true;
-        } else {
-            $settings['api_token'] = null;
-            $settings['has_token'] = false;
+        if (isset($settings['providers']) && is_array($settings['providers'])) {
+            foreach ($settings['providers'] as $provider => &$config) {
+                $config = $this->sanitizeProviderSensitiveFields($provider, $config);
+            }
         }
 
         return $settings;
@@ -119,14 +124,13 @@ class WhatsappSettingsRepository
 
         $data = (array) $record;
 
-        if (isset($data['api_token']) && $data['api_token'] !== null) {
-            try {
-                $data['api_token_raw'] = Crypt::decryptString($data['api_token']);
-                $data['api_token'] = $data['api_token_raw'];
-            } catch (\Throwable) {
-                unset($data['api_token']);
-            }
+        if (isset($data['providers']) && is_string($data['providers'])) {
+            $data['providers'] = json_decode($data['providers'], true) ?? [];
+        } else {
+            $data['providers'] = $this->buildProvidersFromLegacy($data);
         }
+
+        $data = $this->decryptProviderTokens($data);
 
         if (isset($data['extra_settings']) && is_string($data['extra_settings'])) {
             $data['extra_settings'] = json_decode($data['extra_settings'], true);
@@ -135,19 +139,185 @@ class WhatsappSettingsRepository
         return $data;
     }
 
+    protected function buildProvidersFromLegacy(array $data): array
+    {
+        $providers = [];
+
+        $providers['bridge'] = [
+            'api_base_url' => $data['api_base_url'] ?? null,
+            'api_token' => $data['api_token'] ?? null,
+            'sender' => $data['sender'] ?? null,
+            'timeout' => $data['timeout'] ?? 30,
+        ];
+
+        $providers['tilow'] = [
+            'api_base_url' => null,
+            'api_token' => null,
+            'sender' => null,
+            'timeout' => 30,
+        ];
+
+        $providers['meta'] = [
+            'phone_number_id' => null,
+            'access_token' => null,
+            'business_account_id' => null,
+            'verify_token' => null,
+            'app_secret' => null,
+            'timeout' => 30,
+        ];
+
+        return $providers;
+    }
+
+    protected function migrateLegacyFields(array &$record, array $existing, array $providers): void
+    {
+        if (! isset($providers['bridge']['api_base_url']) && isset($existing['api_base_url'])) {
+            $providers['bridge']['api_base_url'] = $existing['api_base_url'];
+        }
+        if (! isset($providers['bridge']['api_token']) && isset($existing['api_token'])) {
+            $providers['bridge']['api_token'] = $existing['api_token'];
+        }
+        if (! isset($providers['bridge']['sender']) && isset($existing['sender'])) {
+            $providers['bridge']['sender'] = $existing['sender'];
+        }
+
+        unset($record['api_base_url'], $record['api_token'], $record['sender']);
+    }
+
+    protected function decryptProviderTokens(array $data): array
+    {
+        if (isset($data['providers']) && is_array($data['providers'])) {
+            foreach ($data['providers'] as $provider => &$config) {
+                $config = $this->decryptSensitiveFields($provider, $config);
+            }
+        }
+
+        return $data;
+    }
+
+    protected function decryptSensitiveFields(string $provider, array $config): array
+    {
+        $sensitiveFields = match ($provider) {
+            'bridge' => ['api_token'],
+            'tilow' => ['api_token'],
+            'meta' => ['access_token', 'app_secret'],
+            default => [],
+        };
+
+        foreach ($sensitiveFields as $field) {
+            if (isset($config[$field]) && $config[$field] !== null) {
+                try {
+                    $config[$field . '_raw'] = Crypt::decryptString($config[$field]);
+                    $config[$field] = $config[$field . '_raw'];
+                } catch (\Throwable) {
+                    unset($config[$field]);
+                }
+            }
+        }
+
+        return $config;
+    }
+
+    protected function sanitizeProviderConfig(string $provider, array $newConfig, array $existing): array
+    {
+        $sensitiveFields = match ($provider) {
+            'bridge' => ['api_token'],
+            'tilow' => ['api_token'],
+            'meta' => ['access_token', 'app_secret'],
+            default => [],
+        };
+
+        foreach ($sensitiveFields as $field) {
+            if (! isset($newConfig[$field]) || $newConfig[$field] === null || $newConfig[$field] === '') {
+                $newConfig[$field] = $existing[$field] ?? null;
+            } else {
+                $newConfig[$field] = Crypt::encryptString($newConfig[$field]);
+            }
+        }
+
+        return $newConfig;
+    }
+
+    protected function sanitizeProviderSensitiveFields(string $provider, array $config): array
+    {
+        $sensitiveFields = match ($provider) {
+            'bridge' => ['api_token'],
+            'tilow' => ['api_token'],
+            'meta' => ['access_token', 'app_secret'],
+            default => [],
+        };
+
+        foreach ($sensitiveFields as $field) {
+            if (isset($config[$field]) && $config[$field] !== null) {
+                $token = (string) $config[$field];
+                $config[$field] = $this->maskToken($token);
+                $config['has_' . $field] = true;
+            } else {
+                $config[$field] = null;
+                $config['has_' . $field] = false;
+            }
+        }
+
+        return $config;
+    }
+
     protected function getConfigDefaults(): array
     {
         return [
-            'provider_name' => config('whatsapp-bridge-settings.provider', 'default'),
-            'api_base_url' => config('whatsapp-bridge-settings.api_base_url'),
-            'api_token' => config('whatsapp-bridge-settings.api_token'),
-            'sender' => config('whatsapp-bridge-settings.sender'),
+            'active_provider' => config('whatsapp-bridge-settings.active_provider', 'bridge'),
+            'provider_name' => config('whatsapp-bridge-settings.providers.bridge.api_base_url') ? 'default' : 'default',
             'default_country_code' => config('whatsapp-bridge-settings.default_country_code', '20'),
             'otp_enabled' => config('whatsapp-bridge-settings.otp_enabled', true),
             'messages_enabled' => config('whatsapp-bridge-settings.messages_enabled', true),
             'otp_template' => config('whatsapp-bridge-settings.otp_template'),
             'timeout' => (int) config('whatsapp-bridge-settings.timeout', 30),
+            'providers' => [
+                'bridge' => [
+                    'api_base_url' => config('whatsapp-bridge-settings.providers.bridge.api_base_url'),
+                    'api_token' => config('whatsapp-bridge-settings.providers.bridge.api_token'),
+                    'sender' => config('whatsapp-bridge-settings.providers.bridge.sender'),
+                    'timeout' => (int) config('whatsapp-bridge-settings.providers.bridge.timeout', 30),
+                ],
+                'tilow' => [
+                    'api_base_url' => config('whatsapp-bridge-settings.providers.tilow.api_base_url'),
+                    'api_token' => config('whatsapp-bridge-settings.providers.tilow.api_token'),
+                    'sender' => config('whatsapp-bridge-settings.providers.tilow.sender'),
+                    'timeout' => (int) config('whatsapp-bridge-settings.providers.tilow.timeout', 30),
+                ],
+                'meta' => [
+                    'phone_number_id' => config('whatsapp-bridge-settings.providers.meta.phone_number_id'),
+                    'access_token' => config('whatsapp-bridge-settings.providers.meta.access_token'),
+                    'business_account_id' => config('whatsapp-bridge-settings.providers.meta.business_account_id'),
+                    'verify_token' => config('whatsapp-bridge-settings.providers.meta.verify_token'),
+                    'app_secret' => config('whatsapp-bridge-settings.providers.meta.app_secret'),
+                    'timeout' => (int) config('whatsapp-bridge-settings.providers.meta.timeout', 30),
+                ],
+            ],
         ];
+    }
+
+    protected function mergeDefaults(array $defaults, array $dbSettings): array
+    {
+        $merged = $defaults;
+
+        foreach ($dbSettings as $key => $value) {
+            if ($key === 'providers' && is_array($value)) {
+                foreach ($value as $provider => $config) {
+                    if (! isset($merged['providers'][$provider])) {
+                        $merged['providers'][$provider] = $config;
+                    } else {
+                        $merged['providers'][$provider] = array_merge(
+                            $merged['providers'][$provider],
+                            $config
+                        );
+                    }
+                }
+            } else {
+                $merged[$key] = $value;
+            }
+        }
+
+        return $merged;
     }
 
     protected function tableExists(): bool

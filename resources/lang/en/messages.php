@@ -3,13 +3,75 @@
 return [
     'navigation_group' => 'Settings',
     'navigation_label' => 'WhatsApp',
-    'page_title' => 'WhatsApp Bridge Settings',
-    'page_heading' => 'WhatsApp Bridge Settings',
+    'page_title' => 'WhatsApp Settings',
+    'page_heading' => 'WhatsApp Settings',
 
-    'sections' => [
-        'api_configuration' => 'API Configuration',
-        'message_settings' => 'Message Settings',
-        'message_templates' => 'Message Templates',
+    'tabs' => [
+        'general' => 'General',
+        'bridge' => 'Bridge',
+        'meta' => 'Meta',
+        'twilio' => 'Twilio',
+        'status' => 'Status',
+    ],
+
+    'providers' => [
+        'bridge' => [
+            'label' => 'WhatsApp Bridge',
+            'description' => 'Self-hosted WhatsApp Web bridge',
+        ],
+        'meta' => [
+            'label' => 'Meta WhatsApp API',
+            'description' => 'Official Meta Cloud API',
+        ],
+        'twilio' => [
+            'label' => 'Twilio WhatsApp',
+            'description' => 'Twilio WhatsApp Messaging API',
+        ],
+    ],
+
+    'general' => [
+        'select_provider' => 'Select Active Provider',
+        'settings' => 'General Settings',
+        'default_country_code' => 'Default Country Code',
+        'otp_template' => 'OTP Message Template',
+        'otp_enabled' => 'Enable OTP Messages',
+        'messages_enabled' => 'Enable Normal Messages',
+        'save' => 'Save Settings',
+    ],
+
+    'bridge' => [
+        'title' => 'WhatsApp Bridge Configuration',
+        'description' => 'Configure your self-hosted WhatsApp Web bridge connection',
+        'api_base_url' => 'API Base URL',
+        'api_token' => 'API Token',
+        'api_token_placeholder' => 'Enter API token',
+        'sender' => 'Sender / Instance ID',
+        'sender_placeholder' => 'Sender ID',
+        'timeout' => 'Timeout (seconds)',
+    ],
+
+    'meta' => [
+        'title' => 'Meta WhatsApp Cloud API',
+        'description' => 'Configure Meta WhatsApp Business Cloud API credentials',
+        'phone_number_id' => 'Phone Number ID',
+        'access_token' => 'Access Token',
+        'access_token_placeholder' => 'Enter access token',
+        'business_account_id' => 'Business Account ID',
+        'verify_token' => 'Verify Token',
+        'verify_token_placeholder' => 'Enter verify token',
+        'app_secret' => 'App Secret',
+        'app_secret_placeholder' => 'Enter app secret',
+        'timeout' => 'Timeout (seconds)',
+    ],
+
+    'twilio' => [
+        'title' => 'Twilio WhatsApp Configuration',
+        'description' => 'Configure Twilio WhatsApp Messaging API credentials',
+        'account_sid' => 'Account SID',
+        'auth_token' => 'Auth Token',
+        'auth_token_placeholder' => 'Enter auth token',
+        'from_number' => 'From Number (WhatsApp)',
+        'timeout' => 'Timeout (seconds)',
     ],
 
     'fields' => [
@@ -56,7 +118,7 @@ return [
         'qr_generating' => 'Generating QR code...',
         'disconnect' => 'Disconnect',
         'connected_title' => 'WhatsApp Connected',
-        'connected_phone' => 'Connected phone: :phone',
+        'connected_phone' => 'Connected: :phone',
         'disconnect_button' => 'Disconnect',
         'test_section_title' => 'Send Test Message',
         'test_phone_label' => 'Phone Number',
@@ -65,6 +127,6 @@ return [
         'test_sending' => 'Sending...',
         'test_send_button' => 'Send Test Message',
         'connect_button' => 'Connect WhatsApp',
-        'description' => 'Generate a QR code to link your WhatsApp account. Open WhatsApp on your phone, go to Settings > Linked Devices > Link a Device.',
+        'description' => 'Generate a QR code to link your WhatsApp account.',
     ],
 ];

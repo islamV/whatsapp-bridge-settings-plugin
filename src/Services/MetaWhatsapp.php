@@ -7,14 +7,16 @@ use Illuminate\Support\Facades\Log;
 use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
 use Islamv\WhatsappBridgeSettingsPlugin\Settings\WhatsappSettingsRepository;
 
-class WhatsappBridge implements WhatsappProviderInterface
+class MetaWhatsapp implements WhatsappProviderInterface
 {
+    protected string $apiVersion = 'v18.0';
+
     public function sendMessage(string $to, string $message, array $options = []): bool
     {
         $config = $this->getConfig();
 
-        if (! $config['api_base_url'] || ! $config['api_token']) {
-            Log::channel($this->logChannel())->warning('WhatsApp bridge not configured');
+        if (! $config['phone_number_id'] || ! $config['access_token']) {
+            Log::channel($this->logChannel())->warning('Meta WhatsApp not configured');
 
             return false;
         }
@@ -22,26 +24,32 @@ class WhatsappBridge implements WhatsappProviderInterface
         $phone = $this->normalizePhone($to, $this->getDefaultCountryCode());
 
         try {
+            $url = "https://graph.facebook.com/{$this->apiVersion}/{$config['phone_number_id']}/messages";
+
             $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->post(rtrim((string) $config['api_base_url'], '/') . '/messages', [
+                ->withToken($config['access_token'])
+                ->post($url, [
+                    'messaging_product' => 'whatsapp',
                     'to' => $phone,
-                    'text' => $message,
-                    'sender' => $config['sender'] ?? null,
+                    'type' => 'text',
+                    'text' => [
+                        'body' => $message,
+                    ],
                 ]);
 
             if ($response->successful()) {
                 return true;
             }
 
-            Log::channel($this->logChannel())->warning('WhatsApp sendMessage failed', [
+            Log::channel($this->logChannel())->warning('Meta sendMessage failed', [
                 'status' => $response->status(),
+                'body' => $response->json(),
                 'to' => $this->maskPhone($phone),
             ]);
 
             return false;
         } catch (\Throwable $e) {
-            Log::channel($this->logChannel())->error('WhatsApp sendMessage exception', [
+            Log::channel($this->logChannel())->error('Meta sendMessage exception', [
                 'message' => $e->getMessage(),
                 'to' => $this->maskPhone($phone),
             ]);
@@ -68,22 +76,16 @@ class WhatsappBridge implements WhatsappProviderInterface
     {
         $config = $this->getConfig();
 
-        if (! $config['api_base_url'] || ! $config['api_token']) {
+        if (! $config['phone_number_id'] || ! $config['access_token']) {
             return 'disconnected';
         }
 
         try {
             $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->get(rtrim((string) $config['api_base_url'], '/') . '/status');
+                ->withToken($config['access_token'])
+                ->get("https://graph.facebook.com/{$this->apiVersion}/{$config['phone_number_id']}");
 
-            if ($response->successful()) {
-                $data = $response->json();
-
-                return ($data['status'] ?? '') === 'connected' ? 'connected' : 'disconnected';
-            }
-
-            return 'disconnected';
+            return $response->successful() ? 'connected' : 'disconnected';
         } catch (\Throwable) {
             return 'disconnected';
         }
@@ -91,86 +93,33 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     public function generateQrCode(): ?string
     {
-        $config = $this->getConfig();
-
-        if (! $config['api_base_url'] || ! $config['api_token']) {
-            return null;
-        }
-
-        try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->post(rtrim((string) $config['api_base_url'], '/') . '/qr');
-
-            if ($response->successful()) {
-                $data = $response->json();
-
-                return $data['qr'] ?? null;
-            }
-
-            return null;
-        } catch (\Throwable $e) {
-            Log::channel($this->logChannel())->error('WhatsApp generateQrCode exception', [
-                'message' => $e->getMessage(),
-            ]);
-
-            return null;
-        }
+        return null;
     }
 
     public function disconnect(): bool
     {
-        $config = $this->getConfig();
-
-        if (! $config['api_base_url'] || ! $config['api_token']) {
-            return false;
-        }
-
-        try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->post(rtrim((string) $config['api_base_url'], '/') . '/disconnect');
-
-            return $response->successful();
-        } catch (\Throwable $e) {
-            Log::channel($this->logChannel())->error('WhatsApp disconnect exception', [
-                'message' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
+        return true;
     }
 
     public function getConnectedPhone(): ?string
     {
         $config = $this->getConfig();
 
-        if (! $config['api_base_url'] || ! $config['api_token']) {
-            return null;
-        }
+        return $config['phone_number_id'] ?? null;
+    }
 
-        try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->get(rtrim((string) $config['api_base_url'], '/') . '/status');
+    public function setApiVersion(string $version): static
+    {
+        $this->apiVersion = $version;
 
-            if ($response->successful()) {
-                $data = $response->json();
-
-                return $data['phone'] ?? null;
-            }
-
-            return null;
-        } catch (\Throwable) {
-            return null;
-        }
+        return $this;
     }
 
     protected function getConfig(): array
     {
         $settings = app(WhatsappSettingsRepository::class);
 
-        return $settings->getProviderConfig('bridge');
+        return $settings->getProviderConfig('meta');
     }
 
     protected function getDefaultCountryCode(): string

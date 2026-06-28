@@ -3,13 +3,75 @@
 return [
     'navigation_group' => 'الإعدادات',
     'navigation_label' => 'واتساب',
-    'page_title' => 'إعدادات جسر واتساب',
-    'page_heading' => 'إعدادات جسر واتساب',
+    'page_title' => 'إعدادات واتساب',
+    'page_heading' => 'إعدادات واتساب',
 
-    'sections' => [
-        'api_configuration' => 'إعدادات API',
-        'message_settings' => 'إعدادات الرسائل',
-        'message_templates' => 'قوالب الرسائل',
+    'tabs' => [
+        'general' => 'عام',
+        'bridge' => 'جسر واتساب',
+        'meta' => 'Meta API',
+        'twilio' => 'Twilio',
+        'status' => 'الحالة',
+    ],
+
+    'providers' => [
+        'bridge' => [
+            'label' => 'جسر واتساب',
+            'description' => 'جسر واتساب ويب مُستضاف ذاتياً',
+        ],
+        'meta' => [
+            'label' => 'Meta Cloud API',
+            'description' => 'واجهة Meta الرسمية لواتساب',
+        ],
+        'twilio' => [
+            'label' => 'Twilio واتساب',
+            'description' => 'واجهة Twilio لرسائل واتساب',
+        ],
+    ],
+
+    'general' => [
+        'select_provider' => 'اختر المزود النشط',
+        'settings' => 'الإعدادات العامة',
+        'default_country_code' => 'رمز الدولة الافتراضي',
+        'otp_template' => 'قالب رسالة OTP',
+        'otp_enabled' => 'تفعيل رسائل OTP',
+        'messages_enabled' => 'تفعيل الرسائل العادية',
+        'save' => 'حفظ الإعدادات',
+    ],
+
+    'bridge' => [
+        'title' => 'إعدادات جسر واتساب',
+        'description' => 'تكوين اتصال جسر واتساب ويب المُستضاف ذاتياً',
+        'api_base_url' => 'رابط API الأساسي',
+        'api_token' => 'رمز API',
+        'api_token_placeholder' => 'أدخل رمز API',
+        'sender' => 'المرسل / معرف المثيل',
+        'sender_placeholder' => 'معرف المرسل',
+        'timeout' => 'المهلة (بالثواني)',
+    ],
+
+    'meta' => [
+        'title' => 'واجهة Meta Cloud API',
+        'description' => 'تكوين بيانات اعتماد Meta WhatsApp Business API',
+        'phone_number_id' => 'معرف رقم الهاتف',
+        'access_token' => 'رمز الوصول',
+        'access_token_placeholder' => 'أدخل رمز الوصول',
+        'business_account_id' => 'معرف حساب الأعمال',
+        'verify_token' => 'رمز التحقق',
+        'verify_token_placeholder' => 'أدخل رمز التحقق',
+        'app_secret' => 'سر التطبيق',
+        'app_secret_placeholder' => 'أدخل سر التطبيق',
+        'timeout' => 'المهلة (بالثواني)',
+    ],
+
+    'twilio' => [
+        'title' => 'إعدادات Twilio واتساب',
+        'description' => 'تكوين بيانات اعتماد Twilio WhatsApp API',
+        'account_sid' => 'معرف الحساب (SID)',
+        'auth_token' => 'رمز المصادقة',
+        'auth_token_placeholder' => 'أدخل رمز المصادقة',
+        'from_number' => 'رقم المرسل (واتساب)',
+        'timeout' => 'المهلة (بالثواني)',
     ],
 
     'fields' => [
@@ -56,7 +118,7 @@ return [
         'qr_generating' => 'جاري إنشاء رمز QR...',
         'disconnect' => 'قطع الاتصال',
         'connected_title' => 'تم الاتصال بواتساب',
-        'connected_phone' => 'رقم الهاتف المتصل: :phone',
+        'connected_phone' => 'متصل بـ: :phone',
         'disconnect_button' => 'قطع الاتصال',
         'test_section_title' => 'إرسال رسالة اختبار',
         'test_phone_label' => 'رقم الهاتف',
@@ -65,6 +127,6 @@ return [
         'test_sending' => 'جاري الإرسال...',
         'test_send_button' => 'إرسال رسالة اختبار',
         'connect_button' => 'ربط واتساب',
-        'description' => 'أنشئ رمز QR لربط حساب واتساب الخاص بك. افتح واتساب على هاتفك، اذهب إلى الإعدادات > الأجهزة المرتبطة > ربط جهاز.',
+        'description' => 'أنشئ رمز QR لربط حساب واتساب الخاص بك.',
     ],
 ];
