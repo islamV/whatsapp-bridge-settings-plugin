@@ -3,11 +3,9 @@
 namespace Islamv\WhatsappBridgeSettingsPlugin\Enums;
 
 use Filament\Support\Contracts\HasColor;
-use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
-use Filament\Support\Icons\Heroicon;
 
-enum WhatsappProvider: string implements HasColor, HasIcon, HasLabel
+enum WhatsappProvider: string implements HasColor, HasLabel
 {
     case Bridge = 'bridge';
     case Meta = 'meta';
@@ -31,21 +29,21 @@ enum WhatsappProvider: string implements HasColor, HasIcon, HasLabel
         };
     }
 
-    public function getIcon(): Heroicon
-    {
-        return match ($this) {
-            self::Bridge => Heroicon::Link,
-            self::Meta => Heroicon::GlobeAlt,
-            self::Twilio => Heroicon::Cloud,
-        };
-    }
-
     public function getDescription(): string
     {
         return match ($this) {
             self::Bridge => __('whatsapp-bridge-settings::messages.providers.bridge.description'),
             self::Meta => __('whatsapp-bridge-settings::messages.providers.meta.description'),
             self::Twilio => __('whatsapp-bridge-settings::messages.providers.twilio.description'),
+        };
+    }
+
+    public function getIconName(): string
+    {
+        return match ($this) {
+            self::Bridge => 'link',
+            self::Meta => 'globe-alt',
+            self::Twilio => 'cloud',
         };
     }
 }

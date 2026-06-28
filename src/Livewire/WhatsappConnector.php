@@ -92,7 +92,7 @@ class WhatsappConnector extends Component
                 $provider->value => [
                     'label' => $provider->getLabel(),
                     'description' => $provider->getDescription(),
-                    'icon' => $provider->getIcon()->value,
+                    'icon' => $provider->getIconName(),
                     'color' => $provider->getColor(),
                 ],
             ])
