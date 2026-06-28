@@ -20,6 +20,8 @@ return new class extends Migration
             $table->text('otp_template')->nullable();
             $table->integer('timeout')->default(30);
             $table->json('extra_settings')->nullable();
+            $table->enum('active_provider', ['bridge', 'meta', 'twilio'])->default('bridge');
+            $table->json('providers')->nullable();
             $table->timestamps();
         });
     }
