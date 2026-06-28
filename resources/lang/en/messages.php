@@ -146,4 +146,14 @@ return [
         'connect_button' => 'Connect WhatsApp',
         'description' => 'Generate a QR code to link your WhatsApp account.',
     ],
+
+    'status' => [
+        'description' => 'Connection controls and live bridge status are managed here.',
+        'current' => 'Current Status',
+        'refresh' => 'Refresh Status',
+        'connected' => 'Connected',
+        'waiting' => 'Waiting for scan',
+        'disconnected' => 'Disconnected',
+        'bridge_only' => 'Live QR connection status is available only for the WhatsApp Bridge provider.',
+    ],
 ];
