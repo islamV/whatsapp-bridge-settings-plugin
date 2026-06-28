@@ -32,8 +32,14 @@ return [
     'general' => [
         'select_provider' => 'Select Active Provider',
         'settings' => 'General Settings',
-        'default_country_code' => 'Default Country Code',
+        'provider_hint' => 'Pick the provider that will power OTP delivery and outgoing messages.',
+        'controls_title' => 'Message Controls',
+        'controls_description' => 'These toggles affect OTP sending and regular message delivery globally.',
+        'otp_enabled_help' => 'Controls whether verification codes are sent.',
+        'messages_enabled_help' => 'Controls outbound WhatsApp messages.',
         'otp_template' => 'OTP Message Template',
+        'otp_template_placeholder' => 'Your verification code is: {otp}',
+        'otp_template_helper' => 'Use {otp} as a placeholder for the OTP code.',
         'otp_enabled' => 'Enable OTP Messages',
         'messages_enabled' => 'Enable Normal Messages',
         'save' => 'Save Settings',
@@ -42,6 +48,8 @@ return [
     'bridge' => [
         'title' => 'WhatsApp Bridge Configuration',
         'description' => 'Configure your self-hosted WhatsApp Web bridge connection',
+        'card_title' => 'Bridge Connection',
+        'card_description' => 'Enter the endpoint and token for the bridge provider.',
         'api_base_url' => 'API Base URL',
         'api_token' => 'API Token',
         'api_token_placeholder' => 'Enter API token',
@@ -53,10 +61,14 @@ return [
     'meta' => [
         'title' => 'Meta WhatsApp Cloud API',
         'description' => 'Configure Meta WhatsApp Business Cloud API credentials',
+        'card_title' => 'Meta Cloud Connection',
+        'card_description' => 'Configure the official Meta Cloud API credentials.',
         'phone_number_id' => 'Phone Number ID',
+        'phone_number_id_placeholder' => '1234567890',
         'access_token' => 'Access Token',
         'access_token_placeholder' => 'Enter access token',
         'business_account_id' => 'Business Account ID',
+        'business_account_id_placeholder' => '1234567890',
         'verify_token' => 'Verify Token',
         'verify_token_placeholder' => 'Enter verify token',
         'app_secret' => 'App Secret',
@@ -67,10 +79,14 @@ return [
     'twilio' => [
         'title' => 'Twilio WhatsApp Configuration',
         'description' => 'Configure Twilio WhatsApp Messaging API credentials',
+        'card_title' => 'Twilio Connection',
+        'card_description' => 'Configure the Twilio WhatsApp Messaging API credentials.',
         'account_sid' => 'Account SID',
+        'account_sid_placeholder' => 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         'auth_token' => 'Auth Token',
         'auth_token_placeholder' => 'Enter auth token',
         'from_number' => 'From Number (WhatsApp)',
+        'from_number_placeholder' => '+1234567890',
         'timeout' => 'Timeout (seconds)',
     ],
 
@@ -114,6 +130,7 @@ return [
 
     'qr' => [
         'qr_scan_title' => 'Scan QR Code with WhatsApp',
+        'qr_image_alt' => 'WhatsApp QR code',
         'qr_expires_in' => 'QR code expires in :count seconds',
         'qr_generating' => 'Generating QR code...',
         'disconnect' => 'Disconnect',

@@ -32,8 +32,14 @@ return [
     'general' => [
         'select_provider' => 'اختر المزود النشط',
         'settings' => 'الإعدادات العامة',
-        'default_country_code' => 'رمز الدولة الافتراضي',
+        'provider_hint' => 'اختر المزود الذي سيعتمد عليه النظام في إرسال رموز التحقق والرسائل الصادرة.',
+        'controls_title' => 'التحكم بالرسائل',
+        'controls_description' => 'هذه الخيارات تؤثر على إرسال OTP والرسائل العادية على مستوى النظام.',
+        'otp_enabled_help' => 'يتحكم في إرسال رموز التحقق.',
+        'messages_enabled_help' => 'يتحكم في الرسائل الصادرة عبر واتساب.',
         'otp_template' => 'قالب رسالة OTP',
+        'otp_template_placeholder' => 'رمز التحقق الخاص بك هو: {otp}',
+        'otp_template_helper' => 'استخدم {otp} كمتغير لرمز التحقق.',
         'otp_enabled' => 'تفعيل رسائل OTP',
         'messages_enabled' => 'تفعيل الرسائل العادية',
         'save' => 'حفظ الإعدادات',
@@ -42,6 +48,8 @@ return [
     'bridge' => [
         'title' => 'إعدادات جسر واتساب',
         'description' => 'تكوين اتصال جسر واتساب ويب المُستضاف ذاتياً',
+        'card_title' => 'اتصال الجسر',
+        'card_description' => 'أدخل رابط الخادم والرمز الخاص بمزود الجسر.',
         'api_base_url' => 'رابط API الأساسي',
         'api_token' => 'رمز API',
         'api_token_placeholder' => 'أدخل رمز API',
@@ -53,10 +61,14 @@ return [
     'meta' => [
         'title' => 'واجهة Meta Cloud API',
         'description' => 'تكوين بيانات اعتماد Meta WhatsApp Business API',
+        'card_title' => 'اتصال Meta Cloud',
+        'card_description' => 'تكوين بيانات اعتماد واجهة Meta الرسمية.',
         'phone_number_id' => 'معرف رقم الهاتف',
+        'phone_number_id_placeholder' => '1234567890',
         'access_token' => 'رمز الوصول',
         'access_token_placeholder' => 'أدخل رمز الوصول',
         'business_account_id' => 'معرف حساب الأعمال',
+        'business_account_id_placeholder' => '1234567890',
         'verify_token' => 'رمز التحقق',
         'verify_token_placeholder' => 'أدخل رمز التحقق',
         'app_secret' => 'سر التطبيق',
@@ -67,10 +79,14 @@ return [
     'twilio' => [
         'title' => 'إعدادات Twilio واتساب',
         'description' => 'تكوين بيانات اعتماد Twilio WhatsApp API',
+        'card_title' => 'اتصال Twilio',
+        'card_description' => 'تكوين بيانات اعتماد خدمة Twilio لواتساب.',
         'account_sid' => 'معرف الحساب (SID)',
+        'account_sid_placeholder' => 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         'auth_token' => 'رمز المصادقة',
         'auth_token_placeholder' => 'أدخل رمز المصادقة',
         'from_number' => 'رقم المرسل (واتساب)',
+        'from_number_placeholder' => '+1234567890',
         'timeout' => 'المهلة (بالثواني)',
     ],
 
@@ -114,6 +130,7 @@ return [
 
     'qr' => [
         'qr_scan_title' => 'امسح رمز QR بتطبيق واتساب',
+        'qr_image_alt' => 'رمز QR الخاص بواتساب',
         'qr_expires_in' => 'ينتهي صلاحية رمز QR خلال :count ثانية',
         'qr_generating' => 'جاري إنشاء رمز QR...',
         'disconnect' => 'قطع الاتصال',

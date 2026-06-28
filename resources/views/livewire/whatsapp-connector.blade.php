@@ -58,7 +58,7 @@
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-600 dark:text-emerald-400">{{ __('whatsapp-bridge-settings::messages.general.select_provider') }}</p>
                         <h3 class="mt-2 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ __('whatsapp-bridge-settings::messages.page_heading') }}</h3>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Pick the provider that will power OTP delivery and outgoing messages.</p>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.general.provider_hint') }}</p>
                     </div>
 
                     <div class="rounded-2xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
@@ -107,8 +107,8 @@
             <section class="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
                 <div class="mb-5">
                     <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{{ __('whatsapp-bridge-settings::messages.general.settings') }}</p>
-                    <h3 class="mt-2 text-xl font-semibold text-gray-900 dark:text-gray-100">Message controls</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">These toggles affect OTP sending and regular message delivery globally.</p>
+                    <h3 class="mt-2 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ __('whatsapp-bridge-settings::messages.general.controls_title') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.general.controls_description') }}</p>
                 </div>
 
                 <div class="space-y-3">
@@ -116,7 +116,7 @@
                         <input wire:model="otpEnabled" type="checkbox" class="mt-1 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
                         <span>
                             <span class="block text-sm font-medium text-gray-900 dark:text-gray-100">{{ __('whatsapp-bridge-settings::messages.general.otp_enabled') }}</span>
-                            <span class="block text-xs text-gray-500 dark:text-gray-400">Controls whether verification codes are sent.</span>
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.general.otp_enabled_help') }}</span>
                         </span>
                     </label>
 
@@ -124,15 +124,15 @@
                         <input wire:model="messagesEnabled" type="checkbox" class="mt-1 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
                         <span>
                             <span class="block text-sm font-medium text-gray-900 dark:text-gray-100">{{ __('whatsapp-bridge-settings::messages.general.messages_enabled') }}</span>
-                            <span class="block text-xs text-gray-500 dark:text-gray-400">Controls outbound WhatsApp messages.</span>
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.general.messages_enabled_help') }}</span>
                         </span>
                     </label>
                 </div>
 
                 <div class="mt-5 space-y-2">
                     <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.general.otp_template') }}</label>
-                    <textarea wire:model.defer="otpTemplate" rows="4" placeholder="Your verification code is: {otp}" class="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"></textarea>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.fields.otp_template_helper') }}</p>
+                    <textarea wire:model.defer="otpTemplate" rows="4" placeholder="{{ __('whatsapp-bridge-settings::messages.general.otp_template_placeholder') }}" class="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"></textarea>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.general.otp_template_helper') }}</p>
                 </div>
 
                 <div class="mt-6 flex justify-end">
@@ -154,15 +154,15 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-md font-bold text-gray-800 dark:text-gray-200">{{ __('whatsapp-bridge-settings::messages.bridge.title') }}</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.bridge.description') }}</p>
+                    <h3 class="text-md font-bold text-gray-800 dark:text-gray-200">{{ __('whatsapp-bridge-settings::messages.bridge.card_title') }}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.bridge.card_description') }}</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.bridge.api_base_url') }}</label>
-                    <input wire:model.defer="bridgeConfig.api_base_url" type="url" placeholder="https://api.whatsapp.example.com" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none" />
+                    <input wire:model.defer="bridgeConfig.api_base_url" type="url" placeholder="{{ __('whatsapp-bridge-settings::messages.fields.api_base_url_placeholder') }}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none" />
                 </div>
 
                 <div class="space-y-1">
@@ -199,15 +199,15 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-md font-bold text-gray-800 dark:text-gray-200">{{ __('whatsapp-bridge-settings::messages.meta.title') }}</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.meta.description') }}</p>
+                    <h3 class="text-md font-bold text-gray-800 dark:text-gray-200">{{ __('whatsapp-bridge-settings::messages.meta.card_title') }}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.meta.card_description') }}</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.meta.phone_number_id') }}</label>
-                    <input wire:model.defer="metaConfig.phone_number_id" type="text" placeholder="1234567890" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+                    <input wire:model.defer="metaConfig.phone_number_id" type="text" placeholder="{{ __('whatsapp-bridge-settings::messages.meta.phone_number_id_placeholder') }}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
                 </div>
 
                 <div class="space-y-1">
@@ -217,7 +217,7 @@
 
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.meta.business_account_id') }}</label>
-                    <input wire:model.defer="metaConfig.business_account_id" type="text" placeholder="1234567890" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+                    <input wire:model.defer="metaConfig.business_account_id" type="text" placeholder="{{ __('whatsapp-bridge-settings::messages.meta.business_account_id_placeholder') }}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
                 </div>
 
                 <div class="space-y-1">
@@ -254,15 +254,15 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-md font-bold text-gray-800 dark:text-gray-200">{{ __('whatsapp-bridge-settings::messages.twilio.title') }}</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.twilio.description') }}</p>
+                    <h3 class="text-md font-bold text-gray-800 dark:text-gray-200">{{ __('whatsapp-bridge-settings::messages.twilio.card_title') }}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.twilio.card_description') }}</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.twilio.account_sid') }}</label>
-                    <input wire:model.defer="twilioConfig.account_sid" type="text" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none" />
+                    <input wire:model.defer="twilioConfig.account_sid" type="text" placeholder="{{ __('whatsapp-bridge-settings::messages.twilio.account_sid_placeholder') }}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none" />
                 </div>
 
                 <div class="space-y-1">
@@ -272,7 +272,7 @@
 
                 <div class="space-y-1">
                     <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.twilio.from_number') }}</label>
-                    <input wire:model.defer="twilioConfig.from_number" type="text" placeholder="+1234567890" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none" />
+                    <input wire:model.defer="twilioConfig.from_number" type="text" placeholder="{{ __('whatsapp-bridge-settings::messages.twilio.from_number_placeholder') }}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none" />
                 </div>
 
                 <div class="space-y-1">
@@ -298,7 +298,7 @@
                 @if ($qrCode)
                     <div class="w-64 h-64 bg-white p-3 border-2 border-emerald-500 rounded-xl shadow-inner flex items-center justify-center">
                         @if (str_starts_with($qrCode, 'data:image') || str_contains($qrCode, 'base64'))
-                            <img src="{{ $qrCode }}" alt="WhatsApp QR Code" class="w-full h-full object-contain" />
+                            <img src="{{ $qrCode }}" alt="{{ __('whatsapp-bridge-settings::messages.qr.qr_image_alt') }}" class="w-full h-full object-contain" />
                         @else
                             {!! $qrCode !!}
                         @endif
