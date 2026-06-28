@@ -3,16 +3,11 @@
 namespace Islamv\WhatsappBridgeSettingsPlugin\Filament\Pages;
 
 use Filament\Actions\Action;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Schema;
 use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
-use Islamv\WhatsappBridgeSettingsPlugin\Settings\WhatsappSettingsRepository;
 
 class WhatsappSettingsPage extends Page
 {
@@ -23,110 +18,6 @@ class WhatsappSettingsPage extends Page
     protected static ?int $navigationSort = 99;
 
     protected string $view = 'whatsapp-bridge-settings::filament.pages.whatsapp-settings';
-
-    public ?array $data = [];
-
-    public function mount(): void
-    {
-        $repository = app(WhatsappSettingsRepository::class);
-        $this->form->fill($repository->safeSettings());
-    }
-
-    public function form(Schema $form): Schema
-    {
-        return $form
-            ->schema([
-                Section::make(__('whatsapp-bridge-settings::messages.sections.api_configuration'))
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('provider_name')
-                            ->label(__('whatsapp-bridge-settings::messages.fields.provider_name'))
-                            ->placeholder(__('whatsapp-bridge-settings::messages.fields.provider_name_placeholder'))
-                            ->maxLength(255),
-
-                        TextInput::make('api_base_url')
-                            ->label(__('whatsapp-bridge-settings::messages.fields.api_base_url'))
-                            ->placeholder(__('whatsapp-bridge-settings::messages.fields.api_base_url_placeholder'))
-                            ->maxLength(255)
-                            ->url(),
-
-                        TextInput::make('api_token')
-                            ->label(__('whatsapp-bridge-settings::messages.fields.api_token'))
-                            ->placeholder(
-                                fn (Get $get): string => $get('has_token')
-                                    ? __('whatsapp-bridge-settings::messages.fields.api_token_placeholder_keep')
-                                    : __('whatsapp-bridge-settings::messages.fields.api_token_placeholder_enter')
-                            )
-                            ->password()
-                            ->revealable()
-                            ->maxLength(4096),
-
-                        TextInput::make('sender')
-                            ->label(__('whatsapp-bridge-settings::messages.fields.sender'))
-                            ->placeholder(__('whatsapp-bridge-settings::messages.fields.sender_placeholder'))
-                            ->maxLength(255),
-
-                        TextInput::make('default_country_code')
-                            ->label(__('whatsapp-bridge-settings::messages.fields.default_country_code'))
-                            ->placeholder(__('whatsapp-bridge-settings::messages.fields.default_country_code_placeholder'))
-                            ->maxLength(10)
-                            ->default('20'),
-
-                        TextInput::make('timeout')
-                            ->label(__('whatsapp-bridge-settings::messages.fields.timeout'))
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(300)
-                            ->default(30),
-                    ]),
-
-                Section::make(__('whatsapp-bridge-settings::messages.sections.message_settings'))
-                    ->columns(2)
-                    ->schema([
-                        Toggle::make('otp_enabled')
-                            ->label(__('whatsapp-bridge-settings::messages.fields.otp_enabled'))
-                            ->default(true),
-
-                        Toggle::make('messages_enabled')
-                            ->label(__('whatsapp-bridge-settings::messages.fields.messages_enabled'))
-                            ->default(true),
-                    ]),
-
-                Section::make(__('whatsapp-bridge-settings::messages.sections.message_templates'))
-                    ->schema([
-                        Textarea::make('otp_template')
-                            ->label(__('whatsapp-bridge-settings::messages.fields.otp_template'))
-                            ->placeholder(__('whatsapp-bridge-settings::messages.fields.otp_template_placeholder'))
-                            ->rows(3)
-                            ->helperText(__('whatsapp-bridge-settings::messages.fields.otp_template_helper')),
-                    ]),
-            ])
-            ->statePath('data');
-    }
-
-    protected function getFormActions(): array
-    {
-        return [
-            Action::make('save')
-                ->label(__('whatsapp-bridge-settings::messages.actions.save'))
-                ->submit('save')
-                ->keyBindings(['mod+s']),
-        ];
-    }
-
-    public function save(): void
-    {
-        $repository = app(WhatsappSettingsRepository::class);
-
-        $data = $this->form->getState();
-
-        $repository->save($data);
-
-        Notification::make()
-            ->title(__('whatsapp-bridge-settings::messages.notifications.saved'))
-            ->success()
-            ->send();
-    }
 
     protected function getHeaderActions(): array
     {

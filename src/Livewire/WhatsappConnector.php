@@ -37,8 +37,6 @@ class WhatsappConnector extends Component
 
     public ?array $twilioConfig = null;
 
-    public string $defaultCountryCode = '20';
-
     public bool $otpEnabled = true;
 
     public bool $messagesEnabled = true;
@@ -57,7 +55,6 @@ class WhatsappConnector extends Component
         $settings = $repository->safeSettings();
 
         $this->activeProvider = $settings['active_provider'] ?? 'bridge';
-        $this->defaultCountryCode = $settings['default_country_code'] ?? '20';
         $this->otpEnabled = $settings['otp_enabled'] ?? true;
         $this->messagesEnabled = $settings['messages_enabled'] ?? true;
         $this->otpTemplate = $settings['otp_template'] ?? 'Your verification code is: {otp}';
@@ -177,7 +174,6 @@ class WhatsappConnector extends Component
 
         $repository->save([
             'active_provider' => $this->activeProvider,
-            'default_country_code' => $this->defaultCountryCode,
             'otp_enabled' => $this->otpEnabled,
             'messages_enabled' => $this->messagesEnabled,
             'otp_template' => $this->otpTemplate,

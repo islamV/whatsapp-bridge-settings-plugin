@@ -1,6 +1,6 @@
-<div dir="rtl">
+<div class="mx-auto max-w-7xl space-y-6" dir="{{ str_starts_with(app()->getLocale(), 'ar') ? 'rtl' : 'ltr' }}">
     @if (session('whatsapp-settings-saved'))
-        <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-xl text-sm dark:bg-green-950/20 dark:border-green-800 dark:text-green-300">
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-300">
             {{ session('whatsapp-settings-saved') }}
         </div>
     @endif
@@ -29,16 +29,16 @@
         ];
     @endphp
 
-    {{-- Tabs --}}
-    <div class="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
+    <div class="rounded-3xl border border-gray-200 bg-white/90 p-2 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/80">
+        <div class="flex flex-wrap gap-1">
         @foreach ($tabLabels as $key => $label)
             <button
                 wire:click="$set('activeTab', '{{ $key }}')"
                 type="button"
-                class="flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition duration-150
+                class="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition duration-150
                     {{ $activeTab === $key
-                        ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
                     }}"
             >
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -47,85 +47,100 @@
                 {{ $label }}
             </button>
         @endforeach
+        </div>
     </div>
 
     {{-- General Tab --}}
     @if ($activeTab === 'general')
-        <div class="space-y-6">
-            <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm">
-                <h3 class="text-md font-bold text-gray-800 dark:text-gray-200 mb-4">{{ __('whatsapp-bridge-settings::messages.general.select_provider') }}</h3>
+        <div class="grid gap-6 xl:grid-cols-[1.35fr_0.95fr]">
+            <section class="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <div class="mb-5 flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-600 dark:text-emerald-400">{{ __('whatsapp-bridge-settings::messages.general.select_provider') }}</p>
+                        <h3 class="mt-2 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ __('whatsapp-bridge-settings::messages.page_heading') }}</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Pick the provider that will power OTP delivery and outgoing messages.</p>
+                    </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="rounded-2xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                        {{ __('whatsapp-bridge-settings::messages.providers.' . $activeProvider . '.label') }}
+                    </div>
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-3">
                     @foreach ($this->getProviders() as $key => $provider)
                         <button
                             wire:click="$set('activeProvider', '{{ $key }}')"
                             type="button"
-                            class="relative p-4 border-2 rounded-xl text-center transition duration-150
+                            class="group relative overflow-hidden rounded-2xl border p-4 text-start transition duration-200
                                 {{ $activeProvider === $key
-                                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-400 shadow-md'
-                                    : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 hover:border-gray-300 dark:hover:border-gray-500'
+                                    ? 'border-emerald-500 bg-emerald-50/80 shadow-[0_10px_30px_rgba(16,185,129,0.14)] dark:border-emerald-400 dark:bg-emerald-950/30'
+                                    : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-white dark:border-gray-700 dark:bg-gray-800/70 dark:hover:border-gray-600'
                                 }}"
                         >
                             @if ($activeProvider === $key)
-                                <div class="absolute top-2 left-2">
-                                    <svg class="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                                <span class="absolute inset-x-0 top-0 h-1 bg-emerald-500"></span>
+                                <span class="absolute end-4 top-4 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
+                                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                     </svg>
-                                </div>
+                                </span>
                             @endif
 
-                            <div class="flex flex-col items-center gap-2">
-                                <div class="w-12 h-12 rounded-full flex items-center justify-center
-                                    {{ $activeProvider === $key ? 'bg-emerald-100 dark:bg-emerald-800/40 text-emerald-600 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400' }}">
-                                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div class="flex flex-col gap-3">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl
+                                    {{ $activeProvider === $key ? 'bg-emerald-600 text-white' : 'bg-white text-gray-500 shadow-sm dark:bg-gray-900 dark:text-gray-300' }}">
+                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         {!! $providerIcons[$provider['icon']] ?? '' !!}
                                     </svg>
                                 </div>
-                                <span class="font-semibold text-sm {{ $activeProvider === $key ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-700 dark:text-gray-300' }}">
-                                    {{ $provider['label'] }}
-                                </span>
-                                <span class="text-xs {{ $activeProvider === $key ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400' }}">
-                                    {{ $provider['description'] }}
-                                </span>
+
+                                <div>
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $provider['label'] }}</div>
+                                    <div class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">{{ $provider['description'] }}</div>
+                                </div>
                             </div>
                         </button>
                     @endforeach
                 </div>
-            </div>
+            </section>
 
-            <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm space-y-4">
-                <h3 class="text-md font-bold text-gray-800 dark:text-gray-200">{{ __('whatsapp-bridge-settings::messages.general.settings') }}</h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.general.default_country_code') }}</label>
-                        <input wire:model.defer="defaultCountryCode" type="text" placeholder="20" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none" />
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.general.otp_template') }}</label>
-                        <textarea wire:model.defer="otpTemplate" rows="2" placeholder="Your verification code is: {otp}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none resize-none"></textarea>
-                    </div>
+            <section class="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <div class="mb-5">
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">{{ __('whatsapp-bridge-settings::messages.general.settings') }}</p>
+                    <h3 class="mt-2 text-xl font-semibold text-gray-900 dark:text-gray-100">Message controls</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">These toggles affect OTP sending and regular message delivery globally.</p>
                 </div>
 
-                <div class="flex items-center gap-6">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input wire:model="otpEnabled" type="checkbox" class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500" />
-                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('whatsapp-bridge-settings::messages.general.otp_enabled') }}</span>
+                <div class="space-y-3">
+                    <label class="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/70">
+                        <input wire:model="otpEnabled" type="checkbox" class="mt-1 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
+                        <span>
+                            <span class="block text-sm font-medium text-gray-900 dark:text-gray-100">{{ __('whatsapp-bridge-settings::messages.general.otp_enabled') }}</span>
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">Controls whether verification codes are sent.</span>
+                        </span>
                     </label>
 
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input wire:model="messagesEnabled" type="checkbox" class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500" />
-                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('whatsapp-bridge-settings::messages.general.messages_enabled') }}</span>
+                    <label class="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/70">
+                        <input wire:model="messagesEnabled" type="checkbox" class="mt-1 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
+                        <span>
+                            <span class="block text-sm font-medium text-gray-900 dark:text-gray-100">{{ __('whatsapp-bridge-settings::messages.general.messages_enabled') }}</span>
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">Controls outbound WhatsApp messages.</span>
+                        </span>
                     </label>
                 </div>
 
-                <div class="flex justify-end pt-2">
-                    <button wire:click="saveGeneral" type="button" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-sm hover:shadow transition duration-150">
+                <div class="mt-5 space-y-2">
+                    <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.general.otp_template') }}</label>
+                    <textarea wire:model.defer="otpTemplate" rows="4" placeholder="Your verification code is: {otp}" class="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"></textarea>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('whatsapp-bridge-settings::messages.fields.otp_template_helper') }}</p>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button wire:click="saveGeneral" type="button" class="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-500">
                         {{ __('whatsapp-bridge-settings::messages.general.save') }}
                     </button>
                 </div>
-            </div>
+            </section>
         </div>
     @endif
 
