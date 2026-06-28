@@ -126,6 +126,7 @@ return [
         'saved' => 'WhatsApp settings saved successfully.',
         'test_sent' => 'Test message sent successfully!',
         'test_failed' => 'Failed to send test message. Check the logs for details.',
+        'qr_failed' => 'Failed to generate the QR code. Check the bridge settings and service response.',
     ],
 
     'qr' => [

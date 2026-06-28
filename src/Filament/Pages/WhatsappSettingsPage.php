@@ -152,6 +152,35 @@ class WhatsappSettingsPage extends Page implements HasForms
                                             ->maxValue(300)
                                             ->default(30),
                                     ]),
+                                Section::make(__('whatsapp-bridge-settings::messages.tabs.status'))
+                                    ->description(__('whatsapp-bridge-settings::messages.status.description'))
+                                    ->hidden(fn (Get $get): bool => $get('active_provider') !== 'bridge')
+                                    ->schema([
+                                        Placeholder::make('bridge_status_summary')
+                                            ->label(__('whatsapp-bridge-settings::messages.status.current'))
+                                            ->content(fn (): HtmlString => $this->renderConnectionSummary()),
+                                        Actions::make([
+                                            Action::make('refreshStatus')
+                                                ->label(__('whatsapp-bridge-settings::messages.status.refresh'))
+                                                ->icon('heroicon-o-arrow-path')
+                                                ->color('gray')
+                                                ->outlined()
+                                                ->action('checkStatus'),
+                                            Action::make('generateQr')
+                                                ->label(__('whatsapp-bridge-settings::messages.qr.connect_button'))
+                                                ->icon('heroicon-o-qr-code')
+                                                ->color('success')
+                                                ->action('generateQr')
+                                                ->hidden(fn (): bool => $this->status === 'connected'),
+                                            Action::make('disconnect')
+                                                ->label(__('whatsapp-bridge-settings::messages.qr.disconnect_button'))
+                                                ->icon('heroicon-o-link-slash')
+                                                ->color('danger')
+                                                ->requiresConfirmation()
+                                                ->action('disconnect')
+                                                ->hidden(fn (): bool => $this->status === 'disconnected'),
+                                        ]),
+                                    ]),
                             ]),
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.meta'))
                             ->icon('heroicon-o-globe-alt')
@@ -220,44 +249,6 @@ class WhatsappSettingsPage extends Page implements HasForms
                                             ->default(30),
                                     ]),
                             ]),
-                        Tab::make(__('whatsapp-bridge-settings::messages.tabs.status'))
-                            ->icon('heroicon-o-signal')
-                            ->schema([
-                                Section::make(__('whatsapp-bridge-settings::messages.tabs.status'))
-                                    ->description(__('whatsapp-bridge-settings::messages.status.description'))
-                                    ->schema([
-                                        Placeholder::make('status_summary')
-                                            ->hidden(fn (Get $get): bool => $get('active_provider') !== 'bridge')
-                                            ->label(__('whatsapp-bridge-settings::messages.status.current'))
-                                            ->content(fn (): HtmlString => $this->renderConnectionSummary()),
-                                        Placeholder::make('status_provider_note')
-                                            ->hidden(fn (Get $get): bool => $get('active_provider') === 'bridge')
-                                            ->label(__('whatsapp-bridge-settings::messages.status.current'))
-                                            ->content(__('whatsapp-bridge-settings::messages.status.bridge_only')),
-                                        Actions::make([
-                                            Action::make('refreshStatus')
-                                                ->label(__('whatsapp-bridge-settings::messages.status.refresh'))
-                                                ->icon('heroicon-o-arrow-path')
-                                                ->color('gray')
-                                                ->outlined()
-                                                ->action('checkStatus')
-                                                ->hidden(fn (Get $get): bool => $get('active_provider') !== 'bridge'),
-                                            Action::make('generateQr')
-                                                ->label(__('whatsapp-bridge-settings::messages.qr.connect_button'))
-                                                ->icon('heroicon-o-qr-code')
-                                                ->color('success')
-                                                ->action('generateQr')
-                                                ->hidden(fn (Get $get): bool => $get('active_provider') !== 'bridge' || $this->status === 'connected'),
-                                            Action::make('disconnect')
-                                                ->label(__('whatsapp-bridge-settings::messages.qr.disconnect_button'))
-                                                ->icon('heroicon-o-link-slash')
-                                                ->color('danger')
-                                                ->requiresConfirmation()
-                                                ->action('disconnect')
-                                                ->hidden(fn (Get $get): bool => $get('active_provider') !== 'bridge' || $this->status === 'disconnected'),
-                                        ]),
-                                    ]),
-                            ]),
                     ]),
             ]);
     }
@@ -275,7 +266,6 @@ class WhatsappSettingsPage extends Page implements HasForms
                         ->placeholder(__('whatsapp-bridge-settings::messages.test_form.phone_placeholder'))
                         ->required()
                         ->maxLength(20),
-
                     Textarea::make('test_message')
                         ->label(__('whatsapp-bridge-settings::messages.test_form.message'))
                         ->placeholder(__('whatsapp-bridge-settings::messages.test_form.message_placeholder'))
@@ -290,26 +280,19 @@ class WhatsappSettingsPage extends Page implements HasForms
                         $data['test_message']
                     );
 
-                    if ($success) {
-                        Notification::make()
-                            ->title(__('whatsapp-bridge-settings::messages.notifications.test_sent'))
-                            ->success()
-                            ->send();
-                    } else {
-                        Notification::make()
-                            ->title(__('whatsapp-bridge-settings::messages.notifications.test_failed'))
-                            ->danger()
-                            ->send();
-                    }
+                    Notification::make()
+                        ->title($success
+                            ? __('whatsapp-bridge-settings::messages.notifications.test_sent')
+                            : __('whatsapp-bridge-settings::messages.notifications.test_failed'))
+                        ->{$success ? 'success' : 'danger'}()
+                        ->send();
                 }),
         ];
     }
 
     public function save(): void
     {
-        $state = $this->form->getState();
-
-        app(WhatsappSettingsRepository::class)->save($state);
+        $this->persistCurrentSettings();
 
         Notification::make()
             ->title(__('whatsapp-bridge-settings::messages.notifications.saved'))
@@ -336,11 +319,20 @@ class WhatsappSettingsPage extends Page implements HasForms
 
     public function generateQr(): void
     {
+        $this->persistCurrentSettings();
+
         $whatsapp = app(WhatsappProviderInterface::class);
 
         $this->qrCode = $whatsapp->generateQrCode();
         $this->status = $this->qrCode ? 'waiting' : 'disconnected';
         $this->connectedPhone = null;
+
+        if (! $this->qrCode) {
+            Notification::make()
+                ->title(__('whatsapp-bridge-settings::messages.notifications.qr_failed'))
+                ->danger()
+                ->send();
+        }
     }
 
     public function disconnect(): void
@@ -370,6 +362,11 @@ class WhatsappSettingsPage extends Page implements HasForms
     public function getHeading(): string
     {
         return __('whatsapp-bridge-settings::messages.page_heading');
+    }
+
+    protected function persistCurrentSettings(): void
+    {
+        app(WhatsappSettingsRepository::class)->save($this->form->getState());
     }
 
     protected function fillForm(): void
@@ -419,7 +416,7 @@ class WhatsappSettingsPage extends Page implements HasForms
         unset(
             $bridgeConfig['has_api_token'],
             $metaConfig['has_access_token'],
-            $metaConfig['has_app_secret']
+            $metaConfig['has_app_secret'],
         );
 
         $this->form->fill([
