@@ -22,7 +22,7 @@ class WhatsappSettingsPage extends Page
 
     protected static ?int $navigationSort = 99;
 
-    protected static string $view = 'whatsapp-bridge-settings::filament.pages.whatsapp-settings';
+    protected string $view = 'whatsapp-bridge-settings::filament.pages.whatsapp-settings';
 
     public ?array $data = [];
 
