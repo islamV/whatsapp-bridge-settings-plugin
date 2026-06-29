@@ -5,7 +5,7 @@ return [
 
     'providers' => [
         'bridge' => [
-            'api_base_url' => env('WHATSAPP_BRIDGE_API_BASE_URL'),
+            'api_base_url' => env('WHATSAPP_BRIDGE_API_BASE_URL', 'http://127.0.0.1:3000'),
             'api_token' => env('WHATSAPP_BRIDGE_API_TOKEN'),
             'sender' => env('WHATSAPP_BRIDGE_SENDER'),
             'timeout' => env('WHATSAPP_BRIDGE_TIMEOUT', 30),

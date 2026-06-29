@@ -55,7 +55,7 @@ public function panel(Panel $panel): Panel
 
 ### 6. Configure WhatsApp credentials
 
-Open the **WhatsApp Settings** page in your Filament admin panel and configure your preferred provider.
+Open the **WhatsApp Settings** page in your Filament admin panel and configure your preferred provider. If you are using the local sibling service ../whatsapp-bridge, the Bridge provider defaults to http://127.0.0.1:3000.
 
 ## Supported Providers
 
@@ -65,7 +65,7 @@ Self-hosted WhatsApp Web bridge with QR code pairing support.
 
 ```env
 WHATSAPP_ACTIVE_PROVIDER=bridge
-WHATSAPP_BRIDGE_API_BASE_URL=https://your-bridge-url.com
+WHATSAPP_BRIDGE_API_BASE_URL=http://127.0.0.1:3000
 WHATSAPP_BRIDGE_API_TOKEN=your-token
 WHATSAPP_BRIDGE_SENDER=your-sender-id
 WHATSAPP_BRIDGE_TIMEOUT=30
