@@ -21,6 +21,7 @@ class WhatsappBridgeTest extends TestCase
 
     protected function defineEnvironment($app): void
     {
+        $app['config']->set('app.key', 'base64:' . base64_encode(random_bytes(32)));
         $app['config']->set('database.default', 'sqlite');
         $app['config']->set('database.connections.sqlite', [
             'driver' => 'sqlite',
@@ -46,6 +47,8 @@ class WhatsappBridgeTest extends TestCase
                 otp_template TEXT NULL,
                 timeout INTEGER DEFAULT 30,
                 extra_settings TEXT NULL,
+                active_provider VARCHAR(255) DEFAULT "bridge",
+                providers TEXT NULL,
                 created_at TIMESTAMP NULL,
                 updated_at TIMESTAMP NULL
             )

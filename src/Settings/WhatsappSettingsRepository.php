@@ -53,6 +53,8 @@ class WhatsappSettingsRepository
         $activeProvider = $data['active_provider'] ?? $existing['active_provider'] ?? 'bridge';
         $providers = $data['providers'] ?? $existing['providers'] ?? [];
 
+        $this->populateProviderFromLegacyFields($providers, $activeProvider, $data, $existing);
+
         if (isset($providers[$activeProvider])) {
             $providers[$activeProvider] = $this->sanitizeProviderConfig(
                 $activeProvider,
@@ -74,7 +76,6 @@ class WhatsappSettingsRepository
                 : ($existing['extra_settings'] ?? null),
         ];
 
-        $this->migrateLegacyFields($record, $existing, $providers);
         $record['providers'] = json_encode($providers);
 
         $count = DB::table(self::TABLE)->count();
@@ -87,6 +88,19 @@ class WhatsappSettingsRepository
 
         $this->settings = null;
         Cache::forget(self::CACHE_KEY);
+    }
+
+    protected function populateProviderFromLegacyFields(array &$providers, string $activeProvider, array $data, array $existing): void
+    {
+        $legacyFields = ['api_base_url', 'api_token', 'sender'];
+
+        foreach ($legacyFields as $field) {
+            if (isset($data[$field]) && $data[$field] !== null && $data[$field] !== '') {
+                $providers[$activeProvider][$field] = $data[$field];
+            } elseif (! isset($providers[$activeProvider][$field]) && isset($existing[$field])) {
+                $providers[$activeProvider][$field] = $existing[$field];
+            }
+        }
     }
 
     public function safeSettings(): array
@@ -171,16 +185,6 @@ class WhatsappSettingsRepository
 
     protected function migrateLegacyFields(array &$record, array $existing, array $providers): void
     {
-        if (! isset($providers['bridge']['api_base_url']) && isset($existing['api_base_url'])) {
-            $providers['bridge']['api_base_url'] = $existing['api_base_url'];
-        }
-        if (! isset($providers['bridge']['api_token']) && isset($existing['api_token'])) {
-            $providers['bridge']['api_token'] = $existing['api_token'];
-        }
-        if (! isset($providers['bridge']['sender']) && isset($existing['sender'])) {
-            $providers['bridge']['sender'] = $existing['sender'];
-        }
-
         unset($record['api_base_url'], $record['api_token'], $record['sender']);
     }
 
@@ -301,6 +305,10 @@ class WhatsappSettingsRepository
         $merged = $defaults;
 
         foreach ($dbSettings as $key => $value) {
+            if ($value === null) {
+                continue;
+            }
+
             if ($key === 'providers' && is_array($value)) {
                 foreach ($value as $provider => $config) {
                     if (! isset($merged['providers'][$provider])) {

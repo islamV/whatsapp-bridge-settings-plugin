@@ -21,7 +21,7 @@ class ConfigTest extends TestCase
 
     public function test_config_has_defaults(): void
     {
-        $this->assertEquals('default', config('whatsapp-bridge-settings.provider'));
+        $this->assertEquals('bridge', config('whatsapp-bridge-settings.active_provider'));
         $this->assertEquals('20', config('whatsapp-bridge-settings.default_country_code'));
         $this->assertEquals(30, config('whatsapp-bridge-settings.timeout'));
         $this->assertTrue(config('whatsapp-bridge-settings.otp_enabled'));
