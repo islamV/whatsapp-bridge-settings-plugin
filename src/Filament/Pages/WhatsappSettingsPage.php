@@ -99,7 +99,6 @@ class WhatsappSettingsPage extends Page implements HasForms
                                             ->inline()
                                             ->live()
                                             ->options($this->getProviderOptions())
-                                            ->icons($this->getProviderIcons())
                                             ->colors($this->getProviderColors())
                                             ->required()
                                             ->columnSpanFull(),
@@ -183,7 +182,6 @@ class WhatsappSettingsPage extends Page implements HasForms
                                     ]),
                             ]),
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.meta'))
-                            ->icon('si-meta')
                             ->schema([
                                 Section::make(__('whatsapp-bridge-settings::messages.meta.card_title'))
                                     ->description(__('whatsapp-bridge-settings::messages.meta.card_description'))
@@ -225,7 +223,6 @@ class WhatsappSettingsPage extends Page implements HasForms
                                     ]),
                             ]),
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.twilio'))
-                            ->icon('si-twilio')
                             ->schema([
                                 Section::make(__('whatsapp-bridge-settings::messages.twilio.card_title'))
                                     ->description(__('whatsapp-bridge-settings::messages.twilio.card_description'))
@@ -437,15 +434,6 @@ class WhatsappSettingsPage extends Page implements HasForms
         return collect(WhatsappProvider::cases())
             ->mapWithKeys(fn (WhatsappProvider $provider) => [$provider->value => $provider->getLabel()])
             ->all();
-    }
-
-    protected function getProviderIcons(): array
-    {
-        return [
-            'bridge' => 'heroicon-o-link',
-            'meta' => 'si-meta',
-            'twilio' => 'si-twilio',
-        ];
     }
 
     protected function getProviderColors(): array
