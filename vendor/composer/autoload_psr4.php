@@ -119,7 +119,6 @@ return array(
     'DanHarrin\\DateFormatConverter\\' => array($vendorDir . '/danharrin/date-format-converter/src'),
     'Cron\\' => array($vendorDir . '/dragonmantank/cron-expression/src/Cron'),
     'Composer\\Semver\\' => array($vendorDir . '/composer/semver/src'),
-    'Codeat3\\BladeSimpleIcons\\' => array($vendorDir . '/codeat3/blade-simple-icons/src'),
     'Carbon\\Doctrine\\' => array($vendorDir . '/carbonphp/carbon-doctrine-types/src/Carbon/Doctrine'),
     'Carbon\\' => array($vendorDir . '/nesbot/carbon/src/Carbon'),
     'Brick\\Math\\' => array($vendorDir . '/brick/math/src'),

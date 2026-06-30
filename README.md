@@ -5,7 +5,7 @@ A reusable WhatsApp bridge and settings plugin for Laravel 13+ and Filament 5. S
 ## Features
 
 - **Multi-provider support** - Bridge, Meta, Twilio with per-provider configuration
-- **Provider selection** - Enum-based provider switching with labels, icons, and colors
+- **Provider selection** - Enum-based provider switching with labels and colors
 - **QR Code pairing** - Connect WhatsApp via QR code (Bridge provider)
 - **Connection status** - Real-time connection monitoring with polling
 - **Test messaging** - Send test messages from the settings page
@@ -139,9 +139,6 @@ WhatsappProvider::Bridge->getLabel(); // 'WhatsApp Bridge'
 // Get provider color
 WhatsappProvider::Meta->getColor(); // 'info'
 
-// Get provider icon
-WhatsappProvider::Twilio->getIcon(); // Heroicon::Cloud
-
 // Iterate all providers
 foreach (WhatsappProvider::cases() as $provider) {
     echo $provider->getLabel();
@@ -198,7 +195,7 @@ src/
 ├── Contracts/
 │   └── WhatsappProviderInterface.php
 ├── Enums/
-│   └── WhatsappProvider.php              # Provider enum with label, color, icon
+│   └── WhatsappProvider.php              # Provider enum with label and color
 ├── Services/
 │   ├── WhatsappBridge.php                # Bridge HTTP implementation
 │   ├── MetaWhatsapp.php                  # Meta Cloud API implementation

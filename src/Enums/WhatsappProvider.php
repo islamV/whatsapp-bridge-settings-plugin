@@ -37,13 +37,4 @@ enum WhatsappProvider: string implements HasColor, HasLabel
             self::Twilio => __('whatsapp-bridge-settings::messages.providers.twilio.description'),
         };
     }
-
-    public function getIconName(): string
-    {
-        return match ($this) {
-            self::Bridge => 'heroicon-o-link',
-            self::Meta => 'si-meta',
-            self::Twilio => 'si-twilio',
-        };
-    }
 }

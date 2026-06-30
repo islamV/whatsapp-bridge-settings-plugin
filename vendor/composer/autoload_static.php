@@ -228,7 +228,6 @@ class ComposerStaticInitfe92e63eb19cac77e1bfcb733445e16e
         array (
             'Cron\\' => 5,
             'Composer\\Semver\\' => 16,
-            'Codeat3\\BladeSimpleIcons\\' => 25,
             'Carbon\\Doctrine\\' => 16,
             'Carbon\\' => 7,
         ),
@@ -700,10 +699,6 @@ class ComposerStaticInitfe92e63eb19cac77e1bfcb733445e16e
         'Composer\\Semver\\' =>
         array (
             0 => __DIR__ . '/..' . '/composer/semver/src',
-        ),
-        'Codeat3\\BladeSimpleIcons\\' =>
-        array (
-            0 => __DIR__ . '/..' . '/codeat3/blade-simple-icons/src',
         ),
         'Carbon\\Doctrine\\' =>
         array (
