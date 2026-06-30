@@ -21,7 +21,6 @@ class ComposerStaticInitfe92e63eb19cac77e1bfcb733445e16e
         '2c620c99f96a2b964346b45a4d1d1e64' => __DIR__ . '/..' . '/spatie/invade/src/functions.php',
         'e125f489d647ae664b0af7b573079de7' => __DIR__ . '/..' . '/filament/support/src/helpers.php',
         '662a729f963d39afe703c9d9b7ab4a8c' => __DIR__ . '/..' . '/symfony/polyfill-php83/bootstrap.php',
-        '6d4419a22bfb72a20b561583f68f48b3' => __DIR__ . '/..' . '/filament/notifications/src/Testing/helpers.php',
         '9e4824c5afbdc1482b6025ce3d4dfde8' => __DIR__ . '/..' . '/league/csv/src/functions_include.php',
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '9261e07cd92c53dcc971c7c88c176c04' => __DIR__ . '/..' . '/danharrin/date-format-converter/src/helpers.php',
@@ -52,6 +51,7 @@ class ComposerStaticInitfe92e63eb19cac77e1bfcb733445e16e
         '493c6aea52f6009bab023b26c21a386a' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Support/functions.php',
         '58571171fd5812e6e447dce228f52f4d' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Support/helpers.php',
         '801c31d8ed748cfa537fa45402288c95' => __DIR__ . '/..' . '/psy/psysh/src/functions.php',
+        '6d4419a22bfb72a20b561583f68f48b3' => __DIR__ . '/..' . '/filament/notifications/src/Testing/helpers.php',
         '6124b4c8570aa390c21fafd04a26c69f' => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy/deep_copy.php',
         'a1cfe24d14977df6878b9bf804af2d1c' => __DIR__ . '/..' . '/nunomaduro/collision/src/Adapters/Phpunit/Autoload.php',
         'c72349b1fe8d0deeedd3a52e8aa814d8' => __DIR__ . '/..' . '/mockery/mockery/library/helpers.php',
@@ -228,6 +228,7 @@ class ComposerStaticInitfe92e63eb19cac77e1bfcb733445e16e
         array (
             'Cron\\' => 5,
             'Composer\\Semver\\' => 16,
+            'Codeat3\\BladeSimpleIcons\\' => 25,
             'Carbon\\Doctrine\\' => 16,
             'Carbon\\' => 7,
         ),
@@ -699,6 +700,10 @@ class ComposerStaticInitfe92e63eb19cac77e1bfcb733445e16e
         'Composer\\Semver\\' =>
         array (
             0 => __DIR__ . '/..' . '/composer/semver/src',
+        ),
+        'Codeat3\\BladeSimpleIcons\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/codeat3/blade-simple-icons/src',
         ),
         'Carbon\\Doctrine\\' =>
         array (

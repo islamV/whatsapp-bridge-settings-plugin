@@ -1,0 +1,54 @@
+{
+    "name": "codeat3/blade-simple-icons",
+    "description": "A package to easily make use of \"Simple Icons\" in your Laravel Blade views. ",
+    "keywords": ["Blade", "simpleicons", "Laravel"],
+    "homepage": "https://github.com/codeat3/blade-simple-icons",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Swapnil Sarwe",
+            "homepage": "https://swapnilsarwe.com"
+        },
+        {
+            "name": "Dries Vints",
+            "homepage": "https://driesvints.com"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "blade-ui-kit/blade-icons": "^1.1",
+        "illuminate/support": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "codeat3/blade-icon-generation-helpers": "^0.12",
+        "codeat3/phpcs-styles": "^1.0",
+        "orchestra/testbench": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0",
+        "phpunit/phpunit": "^9.0|^10.5|^11.0|^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Codeat3\\BladeSimpleIcons\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+              "Codeat3\\BladeSimpleIcons\\BladeSimpleIconsServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "format": "vendor/bin/php-cs-fixer fix"
+    }
+}

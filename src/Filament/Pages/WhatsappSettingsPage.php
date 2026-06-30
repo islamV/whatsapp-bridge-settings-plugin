@@ -183,7 +183,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                                     ]),
                             ]),
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.meta'))
-                            ->icon('heroicon-o-globe-alt')
+                            ->icon('si-meta')
                             ->schema([
                                 Section::make(__('whatsapp-bridge-settings::messages.meta.card_title'))
                                     ->description(__('whatsapp-bridge-settings::messages.meta.card_description'))
@@ -225,7 +225,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                                     ]),
                             ]),
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.twilio'))
-                            ->icon('heroicon-o-cloud')
+                            ->icon('si-twilio')
                             ->schema([
                                 Section::make(__('whatsapp-bridge-settings::messages.twilio.card_title'))
                                     ->description(__('whatsapp-bridge-settings::messages.twilio.card_description'))
@@ -443,8 +443,8 @@ class WhatsappSettingsPage extends Page implements HasForms
     {
         return [
             'bridge' => 'heroicon-o-link',
-            'meta' => 'heroicon-o-globe-alt',
-            'twilio' => 'heroicon-o-cloud',
+            'meta' => 'si-meta',
+            'twilio' => 'si-twilio',
         ];
     }
 

@@ -41,9 +41,9 @@ enum WhatsappProvider: string implements HasColor, HasLabel
     public function getIconName(): string
     {
         return match ($this) {
-            self::Bridge => 'link',
-            self::Meta => 'globe-alt',
-            self::Twilio => 'cloud',
+            self::Bridge => 'heroicon-o-link',
+            self::Meta => 'si-meta',
+            self::Twilio => 'si-twilio',
         };
     }
 }
