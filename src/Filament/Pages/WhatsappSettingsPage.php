@@ -438,11 +438,9 @@ class WhatsappSettingsPage extends Page implements HasForms
 
     protected function getProviderColors(): array
     {
-        return [
-            'bridge' => 'success',
-            'meta' => 'info',
-            'twilio' => 'danger',
-        ];
+        return collect(WhatsappProvider::cases())
+            ->mapWithKeys(fn (WhatsappProvider $provider) => [$provider->value => $provider->getColor()])
+            ->all();
     }
 
     protected function renderConnectionSummary(): HtmlString

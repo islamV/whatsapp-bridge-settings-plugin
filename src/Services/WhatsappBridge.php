@@ -4,14 +4,25 @@ namespace Islamv\WhatsappBridgeSettingsPlugin\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Islamv\WhatsappBridgeSettingsPlugin\Concerns\HandlesOtpMessages;
+use Islamv\WhatsappBridgeSettingsPlugin\Concerns\HasLogChannel;
+use Islamv\WhatsappBridgeSettingsPlugin\Concerns\ManagesPhoneNumbers;
 use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
 use Islamv\WhatsappBridgeSettingsPlugin\Settings\WhatsappSettingsRepository;
 
 class WhatsappBridge implements WhatsappProviderInterface
 {
+    use HandlesOtpMessages;
+    use HasLogChannel;
+    use ManagesPhoneNumbers;
+
+    public function __construct(
+        protected WhatsappSettingsRepository $settings
+    ) {}
+
     public function sendMessage(string $to, string $message, array $options = []): bool
     {
-        $config = $this->getConfig();
+        $config = $this->settings->getProviderConfig('bridge');
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             Log::channel($this->logChannel())->warning('WhatsApp bridge not configured');
@@ -52,21 +63,18 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     public function sendOtp(string $to, string $otp, array $options = []): bool
     {
-        $settings = app(WhatsappSettingsRepository::class);
+        $message = $this->buildOtpMessage($otp);
 
-        if (! $settings->get('otp_enabled', true)) {
+        if ($message === null) {
             return false;
         }
-
-        $template = $settings->get('otp_template', 'Your verification code is: {otp}');
-        $message = str_replace('{otp}', $otp, (string) $template);
 
         return $this->sendMessage($to, $message, $options);
     }
 
     public function getConnectionStatus(): string
     {
-        $config = $this->getConfig();
+        $config = $this->settings->getProviderConfig('bridge');
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             return 'disconnected';
@@ -91,7 +99,7 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     public function generateQrCode(): ?string
     {
-        $config = $this->getConfig();
+        $config = $this->settings->getProviderConfig('bridge');
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             return null;
@@ -120,7 +128,7 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     public function disconnect(): bool
     {
-        $config = $this->getConfig();
+        $config = $this->settings->getProviderConfig('bridge');
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             return false;
@@ -143,7 +151,7 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     public function getConnectedPhone(): ?string
     {
-        $config = $this->getConfig();
+        $config = $this->settings->getProviderConfig('bridge');
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             return null;
@@ -166,55 +174,8 @@ class WhatsappBridge implements WhatsappProviderInterface
         }
     }
 
-    protected function getConfig(): array
-    {
-        $settings = app(WhatsappSettingsRepository::class);
-
-        return $settings->getProviderConfig('bridge');
-    }
-
     protected function getDefaultCountryCode(): string
     {
-        $settings = app(WhatsappSettingsRepository::class);
-
-        return (string) $settings->get('default_country_code', '20');
-    }
-
-    protected function normalizePhone(string $phone, string $defaultCountryCode): string
-    {
-        $cleaned = preg_replace('/[^0-9]/', '', $phone) ?? '';
-
-        if ($cleaned === '') {
-            return $phone;
-        }
-
-        if (str_starts_with($cleaned, '00')) {
-            $cleaned = substr($cleaned, 2);
-        }
-
-        if (strlen($cleaned) <= 10 && ! str_starts_with($cleaned, '00')) {
-            $cleaned = ltrim($cleaned, '0');
-            $cleaned = $defaultCountryCode . $cleaned;
-        }
-
-        return $cleaned;
-    }
-
-    protected function maskPhone(string $phone): string
-    {
-        $len = strlen($phone);
-
-        if ($len <= 4) {
-            return str_repeat('*', $len);
-        }
-
-        return substr($phone, 0, 4) . str_repeat('*', $len - 8) . substr($phone, -4);
-    }
-
-    private function logChannel(): string
-    {
-        $settings = app(WhatsappSettingsRepository::class);
-
-        return $settings->get('log_channel') ?? config('logging.default', 'stack');
+        return (string) $this->settings->get('default_country_code', '20');
     }
 }

@@ -55,11 +55,11 @@ class WhatsappSettingsRepository
 
         $this->populateProviderFromLegacyFields($providers, $activeProvider, $data, $existing);
 
-        if (isset($providers[$activeProvider])) {
-            $providers[$activeProvider] = $this->sanitizeProviderConfig(
-                $activeProvider,
-                $providers[$activeProvider],
-                $existing['providers'][$activeProvider] ?? []
+        foreach ($providers as $providerKey => $providerConfig) {
+            $providers[$providerKey] = $this->sanitizeProviderConfig(
+                $providerKey,
+                $providerConfig,
+                $existing['providers'][$providerKey] ?? []
             );
         }
 
@@ -164,10 +164,10 @@ class WhatsappSettingsRepository
             'timeout' => $data['timeout'] ?? 30,
         ];
 
-        $providers['tilow'] = [
-            'api_base_url' => null,
-            'api_token' => null,
-            'sender' => null,
+        $providers['twilio'] = [
+            'account_sid' => null,
+            'auth_token' => null,
+            'from_number' => null,
             'timeout' => 30,
         ];
 
@@ -203,7 +203,7 @@ class WhatsappSettingsRepository
     {
         $sensitiveFields = match ($provider) {
             'bridge' => ['api_token'],
-            'tilow' => ['api_token'],
+            'twilio' => ['auth_token'],
             'meta' => ['access_token', 'app_secret'],
             default => [],
         };
@@ -226,7 +226,7 @@ class WhatsappSettingsRepository
     {
         $sensitiveFields = match ($provider) {
             'bridge' => ['api_token'],
-            'tilow' => ['api_token'],
+            'twilio' => ['auth_token'],
             'meta' => ['access_token', 'app_secret'],
             default => [],
         };
@@ -246,7 +246,7 @@ class WhatsappSettingsRepository
     {
         $sensitiveFields = match ($provider) {
             'bridge' => ['api_token'],
-            'tilow' => ['api_token'],
+            'twilio' => ['auth_token'],
             'meta' => ['access_token', 'app_secret'],
             default => [],
         };
@@ -269,7 +269,7 @@ class WhatsappSettingsRepository
     {
         return [
             'active_provider' => config('whatsapp-bridge-settings.active_provider', 'bridge'),
-            'provider_name' => config('whatsapp-bridge-settings.providers.bridge.api_base_url') ? 'default' : 'default',
+            'provider_name' => 'default',
             'default_country_code' => config('whatsapp-bridge-settings.default_country_code', '20'),
             'otp_enabled' => config('whatsapp-bridge-settings.otp_enabled', true),
             'messages_enabled' => config('whatsapp-bridge-settings.messages_enabled', true),
@@ -282,11 +282,11 @@ class WhatsappSettingsRepository
                     'sender' => config('whatsapp-bridge-settings.providers.bridge.sender'),
                     'timeout' => (int) config('whatsapp-bridge-settings.providers.bridge.timeout', 30),
                 ],
-                'tilow' => [
-                    'api_base_url' => config('whatsapp-bridge-settings.providers.tilow.api_base_url'),
-                    'api_token' => config('whatsapp-bridge-settings.providers.tilow.api_token'),
-                    'sender' => config('whatsapp-bridge-settings.providers.tilow.sender'),
-                    'timeout' => (int) config('whatsapp-bridge-settings.providers.tilow.timeout', 30),
+                'twilio' => [
+                    'account_sid' => config('whatsapp-bridge-settings.providers.twilio.account_sid'),
+                    'auth_token' => config('whatsapp-bridge-settings.providers.twilio.auth_token'),
+                    'from_number' => config('whatsapp-bridge-settings.providers.twilio.from_number'),
+                    'timeout' => (int) config('whatsapp-bridge-settings.providers.twilio.timeout', 30),
                 ],
                 'meta' => [
                     'phone_number_id' => config('whatsapp-bridge-settings.providers.meta.phone_number_id'),
