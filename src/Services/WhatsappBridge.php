@@ -2,6 +2,7 @@
 
 namespace Islamv\WhatsappBridgeSettingsPlugin\Services;
 
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Islamv\WhatsappBridgeSettingsPlugin\Concerns\HandlesOtpMessages;
@@ -33,13 +34,21 @@ class WhatsappBridge implements WhatsappProviderInterface
         $phone = $this->normalizePhone($to, $this->getDefaultCountryCode());
 
         try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->post(rtrim((string) $config['api_base_url'], '/') . '/messages', [
-                    'to' => $phone,
-                    'text' => $message,
-                    'sender' => $config['sender'] ?? null,
-                ]);
+            $response = $this->requestWithFallback(
+                $config,
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->post($this->buildSessionUrl($config, 'send-message'), [
+                        'phone' => $phone,
+                        'message' => $message,
+                    ]),
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->withToken((string) $config['api_token'])
+                    ->post(rtrim((string) $config['api_base_url'], '/') . '/messages', [
+                        'to' => $phone,
+                        'text' => $message,
+                        'sender' => $config['sender'] ?? null,
+                    ])
+            );
 
             if ($response->successful()) {
                 return true;
@@ -81,14 +90,17 @@ class WhatsappBridge implements WhatsappProviderInterface
         }
 
         try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->get(rtrim((string) $config['api_base_url'], '/') . '/status');
+            $response = $this->requestWithFallback(
+                $config,
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->get($this->buildSessionUrl($config, 'check-connection-session')),
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->withToken((string) $config['api_token'])
+                    ->get(rtrim((string) $config['api_base_url'], '/') . '/status')
+            );
 
             if ($response->successful()) {
-                $data = $response->json();
-
-                return ($data['status'] ?? '') === 'connected' ? 'connected' : 'disconnected';
+                return $this->normalizeBridgeStatus($response->json());
             }
 
             return 'disconnected';
@@ -106,14 +118,19 @@ class WhatsappBridge implements WhatsappProviderInterface
         }
 
         try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->post(rtrim((string) $config['api_base_url'], '/') . '/qr');
+            $response = $this->requestWithFallback(
+                $config,
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->post($this->buildSessionUrl($config, 'generate-token')),
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->withToken((string) $config['api_token'])
+                    ->post(rtrim((string) $config['api_base_url'], '/') . '/qr')
+            );
 
             if ($response->successful()) {
                 $data = $response->json();
 
-                return $data['qr'] ?? null;
+                return $data['qrcode'] ?? $data['qr'] ?? null;
             }
 
             return null;
@@ -135,9 +152,14 @@ class WhatsappBridge implements WhatsappProviderInterface
         }
 
         try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->post(rtrim((string) $config['api_base_url'], '/') . '/disconnect');
+            $response = $this->requestWithFallback(
+                $config,
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->post($this->buildSessionUrl($config, 'close-session')),
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->withToken((string) $config['api_token'])
+                    ->post(rtrim((string) $config['api_base_url'], '/') . '/disconnect')
+            );
 
             return $response->successful();
         } catch (\Throwable $e) {
@@ -158,9 +180,14 @@ class WhatsappBridge implements WhatsappProviderInterface
         }
 
         try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->get(rtrim((string) $config['api_base_url'], '/') . '/status');
+            $response = $this->requestWithFallback(
+                $config,
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->get($this->buildSessionUrl($config, 'check-connection-session')),
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->withToken((string) $config['api_token'])
+                    ->get(rtrim((string) $config['api_base_url'], '/') . '/status')
+            );
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -177,5 +204,47 @@ class WhatsappBridge implements WhatsappProviderInterface
     protected function getDefaultCountryCode(): string
     {
         return (string) $this->settings->get('default_country_code', '20');
+    }
+
+    protected function getSessionName(array $config): string
+    {
+        return trim((string) ($config['sender'] ?? 'default')) ?: 'default';
+    }
+
+    protected function buildSessionUrl(array $config, string $action): string
+    {
+        return rtrim((string) $config['api_base_url'], '/')
+            . '/api/'
+            . rawurlencode((string) $config['api_token'])
+            . '/'
+            . $action
+            . '/'
+            . rawurlencode($this->getSessionName($config));
+    }
+
+    protected function requestWithFallback(array $config, callable $sessionRequest, callable $legacyRequest): Response
+    {
+        $response = $sessionRequest();
+
+        if ($response->status() !== 404) {
+            return $response;
+        }
+
+        return $legacyRequest();
+    }
+
+    protected function normalizeBridgeStatus(array $data): string
+    {
+        $status = $data['status'] ?? null;
+
+        if ($status === true || $status === 'connected' || $status === 'CONNECTED') {
+            return 'connected';
+        }
+
+        if ($status === 'waiting' || $status === 'WAITING' || ! empty($data['qrcode']) || ! empty($data['qr'])) {
+            return 'waiting';
+        }
+
+        return 'disconnected';
     }
 }

@@ -49,6 +49,7 @@ class WhatsappSettingsRepository
     public function save(array $data): void
     {
         $existing = $this->getFromDb();
+        $storedRecordId = $this->getStoredRecordId();
 
         $activeProvider = $data['active_provider'] ?? $existing['active_provider'] ?? 'bridge';
         $providers = $data['providers'] ?? $existing['providers'] ?? [];
@@ -78,10 +79,8 @@ class WhatsappSettingsRepository
 
         $record['providers'] = json_encode($providers);
 
-        $count = DB::table(self::TABLE)->count();
-
-        if ($count > 0) {
-            DB::table(self::TABLE)->where('id', 1)->update($record);
+        if ($storedRecordId !== null) {
+            DB::table(self::TABLE)->where('id', $storedRecordId)->update($record);
         } else {
             DB::table(self::TABLE)->insert($record);
         }
@@ -129,7 +128,7 @@ class WhatsappSettingsRepository
         }
 
         $record = Cache::remember(self::CACHE_KEY, 3600, function () {
-            return DB::table(self::TABLE)->where('id', 1)->first();
+            return DB::table(self::TABLE)->orderBy('id')->first();
         });
 
         if ($record === null) {
@@ -335,6 +334,17 @@ class WhatsappSettingsRepository
         } catch (\Throwable) {
             return false;
         }
+    }
+
+    protected function getStoredRecordId(): ?int
+    {
+        if (! $this->tableExists()) {
+            return null;
+        }
+
+        $id = DB::table(self::TABLE)->orderBy('id')->value('id');
+
+        return $id !== null ? (int) $id : null;
     }
 
     protected function maskToken(string $token): string
