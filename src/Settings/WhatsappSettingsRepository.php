@@ -48,6 +48,7 @@ class WhatsappSettingsRepository
 
     public function save(array $data): void
     {
+        \Illuminate\Support\Facades\Log::info('WhatsappSettingsRepository::save input:', $data);
         $existing = $this->getFromDb();
         $storedRecordId = $this->getStoredRecordId();
 
@@ -86,6 +87,65 @@ class WhatsappSettingsRepository
         ];
 
         $record['providers'] = json_encode($providers);
+
+        if ($storedRecordId !== null) {
+            DB::table(self::TABLE)->where('id', $storedRecordId)->update($record);
+        } else {
+            DB::table(self::TABLE)->insert($record);
+        }
+
+        $this->settings = null;
+        Cache::forget(self::CACHE_KEY);
+    }
+
+    public function saveGeneral(array $data): void
+    {
+        $existing = $this->getFromDb();
+        $storedRecordId = $this->getStoredRecordId();
+
+        $record = [
+            'active_provider'      => $data['active_provider'] ?? $existing['active_provider'] ?? 'bridge',
+            'provider_name'        => $data['provider_name'] ?? $existing['provider_name'] ?? 'default',
+            'default_country_code' => $data['default_country_code'] ?? $existing['default_country_code'] ?? '20',
+            'otp_enabled'          => $data['otp_enabled'] ?? $existing['otp_enabled'] ?? true,
+            'messages_enabled'     => $data['messages_enabled'] ?? $existing['messages_enabled'] ?? true,
+            'otp_template'         => $data['otp_template'] ?? $existing['otp_template'] ?? null,
+            'timeout'              => (int) ($data['timeout'] ?? $existing['timeout'] ?? 30),
+        ];
+
+        if ($storedRecordId !== null) {
+            DB::table(self::TABLE)->where('id', $storedRecordId)->update($record);
+        } else {
+            DB::table(self::TABLE)->insert($record);
+        }
+
+        $this->settings = null;
+        Cache::forget(self::CACHE_KEY);
+    }
+
+    public function saveProvider(string $provider, array $config): void
+    {
+        $existing = $this->getFromDb();
+        $storedRecordId = $this->getStoredRecordId();
+
+        $providers = $existing['providers'] ?? [];
+
+        $providers[$provider] = $this->sanitizeProviderConfig(
+            $provider,
+            $config,
+            $existing['providers'][$provider] ?? []
+        );
+
+        $record = [
+            'providers' => json_encode($providers),
+        ];
+
+        if ($provider === 'bridge') {
+            $bridgeConfig = $providers['bridge'];
+            $record['api_base_url'] = $bridgeConfig['api_base_url'] ?? null;
+            $record['api_token'] = $bridgeConfig['api_token'] ?? null;
+            $record['sender'] = $bridgeConfig['sender'] ?? null;
+        }
 
         if ($storedRecordId !== null) {
             DB::table(self::TABLE)->where('id', $storedRecordId)->update($record);
@@ -221,7 +281,8 @@ class WhatsappSettingsRepository
                     $config[$field . '_raw'] = Crypt::decryptString($config[$field]);
                     $config[$field] = $config[$field . '_raw'];
                 } catch (\Throwable) {
-                    unset($config[$field]);
+                    // Decryption failed. Keep the raw value to avoid losing plain text tokens.
+                    $config[$field . '_raw'] = $config[$field];
                 }
             }
         }
@@ -241,8 +302,10 @@ class WhatsappSettingsRepository
         foreach ($sensitiveFields as $field) {
             if (! isset($newConfig[$field]) || $newConfig[$field] === null || $newConfig[$field] === '') {
                 $newConfig[$field] = $existing[$field] ?? null;
-            } else {
-                $newConfig[$field] = Crypt::encryptString($newConfig[$field]);
+            }
+
+            if ($newConfig[$field] !== null && $newConfig[$field] !== '') {
+                $newConfig[$field] = Crypt::encryptString((string) $newConfig[$field]);
             }
         }
 
