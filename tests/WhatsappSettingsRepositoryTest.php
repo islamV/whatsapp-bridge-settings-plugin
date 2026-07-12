@@ -163,4 +163,114 @@ class WhatsappSettingsRepositoryTest extends TestCase
         $this->assertArrayHasKey('timeout', $all);
         $this->assertArrayNotHasKey('api_token_raw', $all);
     }
+
+    public function test_saves_with_providers_array_format(): void
+    {
+        $repository = $this->app->make(WhatsappSettingsRepository::class);
+
+        $repository->save([
+            'active_provider' => 'meta',
+            'providers' => [
+                'meta' => [
+                    'phone_number_id' => '12345',
+                    'access_token' => 'meta-token',
+                    'timeout' => 15,
+                ],
+            ],
+        ]);
+
+        $repository->clearCache();
+
+        $config = $repository->getProviderConfig('meta');
+        $this->assertEquals('12345', $config['phone_number_id']);
+        $this->assertEquals('meta-token', $config['access_token']);
+        $this->assertEquals(15, $config['timeout']);
+    }
+
+    public function test_twilio_auth_token_is_encrypted_in_database(): void
+    {
+        $repository = $this->app->make(WhatsappSettingsRepository::class);
+
+        $repository->save([
+            'active_provider' => 'twilio',
+            'providers' => [
+                'twilio' => [
+                    'account_sid' => 'AC123',
+                    'auth_token' => 'super-secret-auth-token',
+                    'from_number' => '+1555',
+                ],
+            ],
+        ]);
+
+        $record = DB::table('whatsapp_bridge_settings')->first();
+        $this->assertNotNull($record);
+
+        $providers = json_decode($record->providers, true);
+        $this->assertNotNull($providers['twilio']['auth_token']);
+        $this->assertNotEquals('super-secret-auth-token', $providers['twilio']['auth_token']);
+
+        $decrypted = Crypt::decryptString($providers['twilio']['auth_token']);
+        $this->assertEquals('super-secret-auth-token', $decrypted);
+    }
+
+    public function test_meta_access_token_is_encrypted_in_database(): void
+    {
+        $repository = $this->app->make(WhatsappSettingsRepository::class);
+
+        $repository->save([
+            'active_provider' => 'meta',
+            'providers' => [
+                'meta' => [
+                    'phone_number_id' => '12345',
+                    'access_token' => 'meta-secret-access-token',
+                    'app_secret' => 'meta-app-secret',
+                ],
+            ],
+        ]);
+
+        $record = DB::table('whatsapp_bridge_settings')->first();
+        $this->assertNotNull($record);
+
+        $providers = json_decode($record->providers, true);
+
+        $this->assertNotEquals('meta-secret-access-token', $providers['meta']['access_token']);
+        $decrypted = Crypt::decryptString($providers['meta']['access_token']);
+        $this->assertEquals('meta-secret-access-token', $decrypted);
+
+        $this->assertNotEquals('meta-app-secret', $providers['meta']['app_secret']);
+        $decryptedAppSecret = Crypt::decryptString($providers['meta']['app_secret']);
+        $this->assertEquals('meta-app-secret', $decryptedAppSecret);
+    }
+
+    public function test_safe_settings_masks_all_provider_tokens(): void
+    {
+        $repository = $this->app->make(WhatsappSettingsRepository::class);
+
+        $repository->save([
+            'active_provider' => 'meta',
+            'providers' => [
+                'bridge' => [
+                    'api_token' => 'bridge-token-12345',
+                ],
+                'meta' => [
+                    'phone_number_id' => '12345',
+                    'access_token' => 'meta-token-12345',
+                    'app_secret' => 'app-secret-12345',
+                ],
+                'twilio' => [
+                    'account_sid' => 'AC123',
+                    'auth_token' => 'twilio-auth-token-12345',
+                    'from_number' => '+1555',
+                ],
+            ],
+        ]);
+
+        $repository->clearCache();
+        $safe = $repository->safeSettings();
+
+        $this->assertTrue($safe['providers']['bridge']['has_api_token']);
+        $this->assertTrue($safe['providers']['meta']['has_access_token']);
+        $this->assertTrue($safe['providers']['meta']['has_app_secret']);
+        $this->assertTrue($safe['providers']['twilio']['has_auth_token']);
+    }
 }

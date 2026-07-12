@@ -1,5 +1,9 @@
 # WhatsApp Bridge Settings Plugin
 
+[![Tests](https://github.com/islamV/whatsapp-bridge-settings-plugin/actions/workflows/tests.yml/badge.svg)](https://github.com/islamV/whatsapp-bridge-settings-plugin/actions/workflows/tests.yml)
+[![Latest Version](https://img.shields.io/packagist/v/islamv/whatsapp-bridge-settings-plugin.svg)](https://packagist.org/packages/islamv/whatsapp-bridge-settings-plugin)
+[![License](https://img.shields.io/github/license/islamV/whatsapp-bridge-settings-plugin.svg)](https://github.com/islamV/whatsapp-bridge-settings-plugin/blob/main/LICENSE)
+
 A reusable WhatsApp bridge and settings plugin for Laravel 13+ and Filament 5. Supports multiple providers: **Bridge**, **Meta WhatsApp Cloud API**, and **Twilio WhatsApp**.
 
 ## Features
@@ -55,7 +59,7 @@ public function panel(Panel $panel): Panel
 
 ### 6. Configure WhatsApp credentials
 
-Open the **WhatsApp Settings** page in your Filament admin panel and configure your preferred provider. If you are using the local sibling service ../whatsapp-bridge, the Bridge provider defaults to http://127.0.0.1:3000.
+Open the **WhatsApp Settings** page in your Filament admin panel and configure your preferred provider. If you are using the local sibling service `whatsapp-bridge`, the Bridge provider defaults to `http://127.0.0.1:3000`.
 
 ## Supported Providers
 
@@ -190,33 +194,51 @@ class SendVerificationCode
 
 ```
 src/
-├── WhatsappBridgeSettingsPlugin.php
+├── WhatsappBridgeSettingsPlugin.php          # Filament plugin registration
 ├── WhatsappBridgeSettingsPluginServiceProvider.php
 ├── Contracts/
-│   └── WhatsappProviderInterface.php
+│   └── WhatsappProviderInterface.php         # Provider contract
 ├── Enums/
-│   └── WhatsappProvider.php              # Provider enum with label and color
+│   └── WhatsappProvider.php                  # Provider enum with label and color
+├── Concerns/
+│   ├── ManagesPhoneNumbers.php               # Phone normalization and masking
+│   ├── HasLogChannel.php                     # Log channel resolution
+│   └── HandlesOtpMessages.php                # OTP template rendering
 ├── Services/
-│   ├── WhatsappBridge.php                # Bridge HTTP implementation
-│   ├── MetaWhatsapp.php                  # Meta Cloud API implementation
-│   ├── TwilioWhatsapp.php                # Twilio API implementation
-│   └── WhatsappOtpSender.php             # OTP sending service
+│   ├── WhatsappBridge.php                    # Bridge HTTP implementation
+│   ├── MetaWhatsapp.php                      # Meta Cloud API implementation
+│   ├── TwilioWhatsapp.php                    # Twilio API implementation
+│   └── WhatsappOtpSender.php                 # OTP sending service
 ├── Settings/
-│   └── WhatsappSettingsRepository.php    # Multi-provider settings storage
-├── Livewire/
-│   └── WhatsappConnector.php             # Livewire component with tabs
+│   └── WhatsappSettingsRepository.php        # Multi-provider settings storage
 ├── Filament/
 │   └── Pages/
-│       └── WhatsappSettingsPage.php      # Filament settings page
-├── Facades/
-│   └── WhatsappBridge.php                # Facade
+│       └── WhatsappSettingsPage.php          # Filament settings page
+└── Facades/
+    └── WhatsappBridge.php                    # Facade
+
 resources/
 ├── lang/
 │   ├── en/messages.php
 │   └── ar/messages.php
 └── views/
-    └── livewire/
-        └── whatsapp-connector.blade.php
+
+config/
+└── whatsapp-bridge-settings.php
+
+database/
+└── migrations/
+    └── create_whatsapp_bridge_settings_table.php
+
+tests/
+├── ConfigTest.php
+├── ServiceProviderTest.php
+├── ProviderSelectionTest.php
+├── WhatsappBridgeTest.php
+├── MetaWhatsappTest.php
+├── TwilioWhatsappTest.php
+├── WhatsappOtpSenderTest.php
+└── WhatsappSettingsRepositoryTest.php
 ```
 
 ## Testing
@@ -225,9 +247,18 @@ resources/
 vendor/bin/phpunit
 ```
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for recent changes.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
 ## Security
 
-- API tokens are encrypted at rest in the database
-- Full tokens are never displayed in the UI after saving
-- Error messages never expose credentials
-- Phone numbers are masked in logs
+See [SECURITY.md](SECURITY.md) for security policies and vulnerability reporting.
+
+## License
+
+The MIT License (MIT). See [LICENSE](LICENSE) for more information.

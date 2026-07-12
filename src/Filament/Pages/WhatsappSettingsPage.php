@@ -65,18 +65,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                 Form::make([
                     EmbeddedSchema::make('form'),
                 ])
-                    ->id('whatsapp-settings-form')
-                    ->livewireSubmitHandler('save')
-                    ->footer([
-                        Actions::make([
-                            Action::make('save')
-                                ->label(__('whatsapp-bridge-settings::messages.general.save'))
-                                ->icon('heroicon-o-check')
-                                ->color('success')
-                                ->submit('save')
-                                ->keyBindings(['mod+s']),
-                        ]),
-                    ]),
+                    ->id('whatsapp-settings-form'),
             ]);
     }
 
@@ -120,6 +109,14 @@ class WhatsappSettingsPage extends Page implements HasForms
                                             ->rows(4)
                                             ->columnSpanFull(),
                                     ]),
+                                Actions::make([
+                                    Action::make('saveGeneral')
+                                        ->label(__('whatsapp-bridge-settings::messages.general.save'))
+                                        ->icon('heroicon-o-check')
+                                        ->color('success')
+                                        ->action('saveGeneral')
+                                        ->keyBindings(['mod+s']),
+                                ]),
                             ]),
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.bridge'))
                             ->icon('heroicon-o-link')
@@ -134,13 +131,9 @@ class WhatsappSettingsPage extends Page implements HasForms
                                             ->url(),
                                         TextInput::make('providers.bridge.api_token')
                                             ->label(__('whatsapp-bridge-settings::messages.bridge.api_token'))
-                                            ->placeholder($this->hasBridgeApiToken
-                                                ? __('whatsapp-bridge-settings::messages.fields.api_token_placeholder_keep')
-                                                : __('whatsapp-bridge-settings::messages.bridge.api_token_placeholder'))
-                                            ->helperText($this->hasBridgeApiToken
-                                                ? __('whatsapp-bridge-settings::messages.fields.api_token_placeholder_keep')
-                                                : null)
-                                            ->password(),
+                                            ->placeholder(__('whatsapp-bridge-settings::messages.bridge.api_token_placeholder'))
+                                            ->password()
+                                            ->revealable(),
                                         TextInput::make('providers.bridge.sender')
                                             ->label(__('whatsapp-bridge-settings::messages.bridge.sender'))
                                             ->placeholder(__('whatsapp-bridge-settings::messages.bridge.sender_placeholder')),
@@ -151,6 +144,13 @@ class WhatsappSettingsPage extends Page implements HasForms
                                             ->maxValue(300)
                                             ->default(30),
                                     ]),
+                                Actions::make([
+                                    Action::make('saveBridge')
+                                        ->label(__('whatsapp-bridge-settings::messages.general.save'))
+                                        ->icon('heroicon-o-check')
+                                        ->color('success')
+                                        ->action('saveBridge'),
+                                ]),
                                 Section::make(__('whatsapp-bridge-settings::messages.tabs.status'))
                                     ->description(__('whatsapp-bridge-settings::messages.status.description'))
                                     ->hidden(fn (Get $get): bool => $get('active_provider') !== 'bridge')
@@ -192,13 +192,9 @@ class WhatsappSettingsPage extends Page implements HasForms
                                             ->placeholder(__('whatsapp-bridge-settings::messages.meta.phone_number_id_placeholder')),
                                         TextInput::make('providers.meta.access_token')
                                             ->label(__('whatsapp-bridge-settings::messages.meta.access_token'))
-                                            ->placeholder($this->hasMetaAccessToken
-                                                ? __('whatsapp-bridge-settings::messages.fields.api_token_placeholder_keep')
-                                                : __('whatsapp-bridge-settings::messages.meta.access_token_placeholder'))
-                                            ->helperText($this->hasMetaAccessToken
-                                                ? __('whatsapp-bridge-settings::messages.fields.api_token_placeholder_keep')
-                                                : null)
-                                            ->password(),
+                                            ->placeholder(__('whatsapp-bridge-settings::messages.meta.access_token_placeholder'))
+                                            ->password()
+                                            ->revealable(),
                                         TextInput::make('providers.meta.business_account_id')
                                             ->label(__('whatsapp-bridge-settings::messages.meta.business_account_id'))
                                             ->placeholder(__('whatsapp-bridge-settings::messages.meta.business_account_id_placeholder')),
@@ -207,13 +203,9 @@ class WhatsappSettingsPage extends Page implements HasForms
                                             ->placeholder(__('whatsapp-bridge-settings::messages.meta.verify_token_placeholder')),
                                         TextInput::make('providers.meta.app_secret')
                                             ->label(__('whatsapp-bridge-settings::messages.meta.app_secret'))
-                                            ->placeholder($this->hasMetaAppSecret
-                                                ? __('whatsapp-bridge-settings::messages.fields.api_token_placeholder_keep')
-                                                : __('whatsapp-bridge-settings::messages.meta.app_secret_placeholder'))
-                                            ->helperText($this->hasMetaAppSecret
-                                                ? __('whatsapp-bridge-settings::messages.fields.api_token_placeholder_keep')
-                                                : null)
-                                            ->password(),
+                                            ->placeholder(__('whatsapp-bridge-settings::messages.meta.app_secret_placeholder'))
+                                            ->password()
+                                            ->revealable(),
                                         TextInput::make('providers.meta.timeout')
                                             ->label(__('whatsapp-bridge-settings::messages.meta.timeout'))
                                             ->numeric()
@@ -221,6 +213,13 @@ class WhatsappSettingsPage extends Page implements HasForms
                                             ->maxValue(300)
                                             ->default(30),
                                     ]),
+                                Actions::make([
+                                    Action::make('saveMeta')
+                                        ->label(__('whatsapp-bridge-settings::messages.general.save'))
+                                        ->icon('heroicon-o-check')
+                                        ->color('success')
+                                        ->action('saveMeta'),
+                                ]),
                             ]),
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.twilio'))
                             ->schema([
@@ -234,7 +233,8 @@ class WhatsappSettingsPage extends Page implements HasForms
                                         TextInput::make('providers.twilio.auth_token')
                                             ->label(__('whatsapp-bridge-settings::messages.twilio.auth_token'))
                                             ->placeholder(__('whatsapp-bridge-settings::messages.twilio.auth_token_placeholder'))
-                                            ->password(),
+                                            ->password()
+                                            ->revealable(),
                                         TextInput::make('providers.twilio.from_number')
                                             ->label(__('whatsapp-bridge-settings::messages.twilio.from_number'))
                                             ->placeholder(__('whatsapp-bridge-settings::messages.twilio.from_number_placeholder')),
@@ -245,6 +245,13 @@ class WhatsappSettingsPage extends Page implements HasForms
                                             ->maxValue(300)
                                             ->default(30),
                                     ]),
+                                Actions::make([
+                                    Action::make('saveTwilio')
+                                        ->label(__('whatsapp-bridge-settings::messages.general.save'))
+                                        ->icon('heroicon-o-check')
+                                        ->color('success')
+                                        ->action('saveTwilio'),
+                                ]),
                             ]),
                     ]),
             ]);
@@ -287,9 +294,59 @@ class WhatsappSettingsPage extends Page implements HasForms
         ];
     }
 
-    public function save(): void
+    public function saveGeneral(): void
     {
-        $this->persistCurrentSettings();
+        $state = $this->form->getState();
+        
+        app(WhatsappSettingsRepository::class)->saveGeneral($state);
+
+        Notification::make()
+            ->title(__('whatsapp-bridge-settings::messages.notifications.saved'))
+            ->success()
+            ->send();
+
+        $this->fillForm();
+        $this->checkStatus();
+    }
+
+    public function saveBridge(): void
+    {
+        $state = $this->form->getState();
+        $config = $state['providers']['bridge'] ?? [];
+
+        app(WhatsappSettingsRepository::class)->saveProvider('bridge', $config);
+
+        Notification::make()
+            ->title(__('whatsapp-bridge-settings::messages.notifications.saved'))
+            ->success()
+            ->send();
+
+        $this->fillForm();
+        $this->checkStatus();
+    }
+
+    public function saveMeta(): void
+    {
+        $state = $this->form->getState();
+        $config = $state['providers']['meta'] ?? [];
+
+        app(WhatsappSettingsRepository::class)->saveProvider('meta', $config);
+
+        Notification::make()
+            ->title(__('whatsapp-bridge-settings::messages.notifications.saved'))
+            ->success()
+            ->send();
+
+        $this->fillForm();
+        $this->checkStatus();
+    }
+
+    public function saveTwilio(): void
+    {
+        $state = $this->form->getState();
+        $config = $state['providers']['twilio'] ?? [];
+
+        app(WhatsappSettingsRepository::class)->saveProvider('twilio', $config);
 
         Notification::make()
             ->title(__('whatsapp-bridge-settings::messages.notifications.saved'))
@@ -316,15 +373,21 @@ class WhatsappSettingsPage extends Page implements HasForms
 
     public function generateQr(): void
     {
-        $this->persistCurrentSettings();
+        $state = $this->form->getState();
+        $config = $state['providers']['bridge'] ?? [];
+
+        app(WhatsappSettingsRepository::class)->saveProvider('bridge', $config);
+        $this->fillForm();
 
         $whatsapp = app(WhatsappProviderInterface::class);
 
         $this->qrCode = $whatsapp->generateQrCode();
-        $this->status = $this->qrCode ? 'waiting' : 'disconnected';
-        $this->connectedPhone = null;
+        $this->status = $this->qrCode ? 'waiting' : $whatsapp->getConnectionStatus();
+        $this->connectedPhone = $this->status === 'connected'
+            ? $whatsapp->getConnectedPhone()
+            : null;
 
-        if (! $this->qrCode) {
+        if (! $this->qrCode && $this->status !== 'connected') {
             Notification::make()
                 ->title(__('whatsapp-bridge-settings::messages.notifications.qr_failed'))
                 ->danger()
@@ -361,14 +424,10 @@ class WhatsappSettingsPage extends Page implements HasForms
         return __('whatsapp-bridge-settings::messages.page_heading');
     }
 
-    protected function persistCurrentSettings(): void
-    {
-        app(WhatsappSettingsRepository::class)->save($this->form->getState());
-    }
 
     protected function fillForm(): void
     {
-        $settings = app(WhatsappSettingsRepository::class)->safeSettings();
+        $settings = app(WhatsappSettingsRepository::class)->all();
         $providers = $settings['providers'] ?? [];
 
         $bridgeConfig = array_replace([
@@ -394,27 +453,9 @@ class WhatsappSettingsPage extends Page implements HasForms
             'timeout' => 30,
         ], $providers['twilio'] ?? []);
 
-        $this->hasBridgeApiToken = (bool) ($bridgeConfig['has_api_token'] ?? false);
-        $this->hasMetaAccessToken = (bool) ($metaConfig['has_access_token'] ?? false);
-        $this->hasMetaAppSecret = (bool) ($metaConfig['has_app_secret'] ?? false);
-
-        if ($this->hasBridgeApiToken) {
-            $bridgeConfig['api_token'] = '';
-        }
-
-        if ($this->hasMetaAccessToken) {
-            $metaConfig['access_token'] = '';
-        }
-
-        if ($this->hasMetaAppSecret) {
-            $metaConfig['app_secret'] = '';
-        }
-
-        unset(
-            $bridgeConfig['has_api_token'],
-            $metaConfig['has_access_token'],
-            $metaConfig['has_app_secret'],
-        );
+        $this->hasBridgeApiToken = filled($bridgeConfig['api_token'] ?? null);
+        $this->hasMetaAccessToken = filled($metaConfig['access_token'] ?? null);
+        $this->hasMetaAppSecret = filled($metaConfig['app_secret'] ?? null);
 
         $this->form->fill([
             'active_provider' => $settings['active_provider'] ?? 'bridge',
@@ -438,11 +479,9 @@ class WhatsappSettingsPage extends Page implements HasForms
 
     protected function getProviderColors(): array
     {
-        return [
-            'bridge' => 'success',
-            'meta' => 'info',
-            'twilio' => 'danger',
-        ];
+        return collect(WhatsappProvider::cases())
+            ->mapWithKeys(fn (WhatsappProvider $provider) => [$provider->value => $provider->getColor()])
+            ->all();
     }
 
     protected function renderConnectionSummary(): HtmlString

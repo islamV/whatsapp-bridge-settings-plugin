@@ -48,40 +48,107 @@ class WhatsappSettingsRepository
 
     public function save(array $data): void
     {
+        \Illuminate\Support\Facades\Log::info('WhatsappSettingsRepository::save input:', $data);
         $existing = $this->getFromDb();
+        $storedRecordId = $this->getStoredRecordId();
 
         $activeProvider = $data['active_provider'] ?? $existing['active_provider'] ?? 'bridge';
         $providers = $data['providers'] ?? $existing['providers'] ?? [];
 
         $this->populateProviderFromLegacyFields($providers, $activeProvider, $data, $existing);
 
-        if (isset($providers[$activeProvider])) {
-            $providers[$activeProvider] = $this->sanitizeProviderConfig(
-                $activeProvider,
-                $providers[$activeProvider],
-                $existing['providers'][$activeProvider] ?? []
+        foreach ($providers as $providerKey => $providerConfig) {
+            $providers[$providerKey] = $this->sanitizeProviderConfig(
+                $providerKey,
+                $providerConfig,
+                $existing['providers'][$providerKey] ?? []
             );
         }
 
+        // Sync legacy flat columns from bridge provider config for backward compatibility.
+        // These columns still exist in the schema and should always reflect the current bridge settings.
+        $bridgeFinal = $providers['bridge'] ?? [];
+
         $record = [
-            'active_provider' => $activeProvider,
-            'provider_name' => $data['provider_name'] ?? $existing['provider_name'] ?? 'default',
+            'active_provider'      => $activeProvider,
+            'provider_name'        => $data['provider_name'] ?? $existing['provider_name'] ?? 'default',
             'default_country_code' => $data['default_country_code'] ?? $existing['default_country_code'] ?? '20',
-            'otp_enabled' => $data['otp_enabled'] ?? $existing['otp_enabled'] ?? true,
-            'messages_enabled' => $data['messages_enabled'] ?? $existing['messages_enabled'] ?? true,
-            'otp_template' => $data['otp_template'] ?? $existing['otp_template'] ?? null,
-            'timeout' => (int) ($data['timeout'] ?? $existing['timeout'] ?? 30),
-            'extra_settings' => isset($data['extra_settings'])
+            'otp_enabled'          => $data['otp_enabled'] ?? $existing['otp_enabled'] ?? true,
+            'messages_enabled'     => $data['messages_enabled'] ?? $existing['messages_enabled'] ?? true,
+            'otp_template'         => $data['otp_template'] ?? $existing['otp_template'] ?? null,
+            'timeout'              => (int) ($data['timeout'] ?? $existing['timeout'] ?? 30),
+            'extra_settings'       => isset($data['extra_settings'])
                 ? json_encode($data['extra_settings'])
                 : ($existing['extra_settings'] ?? null),
+            // Legacy flat columns kept in sync so DB viewers always show current bridge config.
+            'api_base_url' => $bridgeFinal['api_base_url'] ?? null,
+            'api_token'    => $bridgeFinal['api_token'] ?? null,   // stored encrypted by sanitizeProviderConfig
+            'sender'       => $bridgeFinal['sender'] ?? null,
         ];
 
         $record['providers'] = json_encode($providers);
 
-        $count = DB::table(self::TABLE)->count();
+        if ($storedRecordId !== null) {
+            DB::table(self::TABLE)->where('id', $storedRecordId)->update($record);
+        } else {
+            DB::table(self::TABLE)->insert($record);
+        }
 
-        if ($count > 0) {
-            DB::table(self::TABLE)->where('id', 1)->update($record);
+        $this->settings = null;
+        Cache::forget(self::CACHE_KEY);
+    }
+
+    public function saveGeneral(array $data): void
+    {
+        $existing = $this->getFromDb();
+        $storedRecordId = $this->getStoredRecordId();
+
+        $record = [
+            'active_provider'      => $data['active_provider'] ?? $existing['active_provider'] ?? 'bridge',
+            'provider_name'        => $data['provider_name'] ?? $existing['provider_name'] ?? 'default',
+            'default_country_code' => $data['default_country_code'] ?? $existing['default_country_code'] ?? '20',
+            'otp_enabled'          => $data['otp_enabled'] ?? $existing['otp_enabled'] ?? true,
+            'messages_enabled'     => $data['messages_enabled'] ?? $existing['messages_enabled'] ?? true,
+            'otp_template'         => $data['otp_template'] ?? $existing['otp_template'] ?? null,
+            'timeout'              => (int) ($data['timeout'] ?? $existing['timeout'] ?? 30),
+        ];
+
+        if ($storedRecordId !== null) {
+            DB::table(self::TABLE)->where('id', $storedRecordId)->update($record);
+        } else {
+            DB::table(self::TABLE)->insert($record);
+        }
+
+        $this->settings = null;
+        Cache::forget(self::CACHE_KEY);
+    }
+
+    public function saveProvider(string $provider, array $config): void
+    {
+        $existing = $this->getFromDb();
+        $storedRecordId = $this->getStoredRecordId();
+
+        $providers = $existing['providers'] ?? [];
+
+        $providers[$provider] = $this->sanitizeProviderConfig(
+            $provider,
+            $config,
+            $existing['providers'][$provider] ?? []
+        );
+
+        $record = [
+            'providers' => json_encode($providers),
+        ];
+
+        if ($provider === 'bridge') {
+            $bridgeConfig = $providers['bridge'];
+            $record['api_base_url'] = $bridgeConfig['api_base_url'] ?? null;
+            $record['api_token'] = $bridgeConfig['api_token'] ?? null;
+            $record['sender'] = $bridgeConfig['sender'] ?? null;
+        }
+
+        if ($storedRecordId !== null) {
+            DB::table(self::TABLE)->where('id', $storedRecordId)->update($record);
         } else {
             DB::table(self::TABLE)->insert($record);
         }
@@ -129,7 +196,7 @@ class WhatsappSettingsRepository
         }
 
         $record = Cache::remember(self::CACHE_KEY, 3600, function () {
-            return DB::table(self::TABLE)->where('id', 1)->first();
+            return DB::table(self::TABLE)->orderBy('id')->first();
         });
 
         if ($record === null) {
@@ -164,10 +231,10 @@ class WhatsappSettingsRepository
             'timeout' => $data['timeout'] ?? 30,
         ];
 
-        $providers['tilow'] = [
-            'api_base_url' => null,
-            'api_token' => null,
-            'sender' => null,
+        $providers['twilio'] = [
+            'account_sid' => null,
+            'auth_token' => null,
+            'from_number' => null,
             'timeout' => 30,
         ];
 
@@ -203,7 +270,7 @@ class WhatsappSettingsRepository
     {
         $sensitiveFields = match ($provider) {
             'bridge' => ['api_token'],
-            'tilow' => ['api_token'],
+            'twilio' => ['auth_token'],
             'meta' => ['access_token', 'app_secret'],
             default => [],
         };
@@ -214,7 +281,8 @@ class WhatsappSettingsRepository
                     $config[$field . '_raw'] = Crypt::decryptString($config[$field]);
                     $config[$field] = $config[$field . '_raw'];
                 } catch (\Throwable) {
-                    unset($config[$field]);
+                    // Decryption failed. Keep the raw value to avoid losing plain text tokens.
+                    $config[$field . '_raw'] = $config[$field];
                 }
             }
         }
@@ -226,7 +294,7 @@ class WhatsappSettingsRepository
     {
         $sensitiveFields = match ($provider) {
             'bridge' => ['api_token'],
-            'tilow' => ['api_token'],
+            'twilio' => ['auth_token'],
             'meta' => ['access_token', 'app_secret'],
             default => [],
         };
@@ -234,8 +302,10 @@ class WhatsappSettingsRepository
         foreach ($sensitiveFields as $field) {
             if (! isset($newConfig[$field]) || $newConfig[$field] === null || $newConfig[$field] === '') {
                 $newConfig[$field] = $existing[$field] ?? null;
-            } else {
-                $newConfig[$field] = Crypt::encryptString($newConfig[$field]);
+            }
+
+            if ($newConfig[$field] !== null && $newConfig[$field] !== '') {
+                $newConfig[$field] = Crypt::encryptString((string) $newConfig[$field]);
             }
         }
 
@@ -246,7 +316,7 @@ class WhatsappSettingsRepository
     {
         $sensitiveFields = match ($provider) {
             'bridge' => ['api_token'],
-            'tilow' => ['api_token'],
+            'twilio' => ['auth_token'],
             'meta' => ['access_token', 'app_secret'],
             default => [],
         };
@@ -269,7 +339,7 @@ class WhatsappSettingsRepository
     {
         return [
             'active_provider' => config('whatsapp-bridge-settings.active_provider', 'bridge'),
-            'provider_name' => config('whatsapp-bridge-settings.providers.bridge.api_base_url') ? 'default' : 'default',
+            'provider_name' => 'default',
             'default_country_code' => config('whatsapp-bridge-settings.default_country_code', '20'),
             'otp_enabled' => config('whatsapp-bridge-settings.otp_enabled', true),
             'messages_enabled' => config('whatsapp-bridge-settings.messages_enabled', true),
@@ -282,11 +352,11 @@ class WhatsappSettingsRepository
                     'sender' => config('whatsapp-bridge-settings.providers.bridge.sender'),
                     'timeout' => (int) config('whatsapp-bridge-settings.providers.bridge.timeout', 30),
                 ],
-                'tilow' => [
-                    'api_base_url' => config('whatsapp-bridge-settings.providers.tilow.api_base_url'),
-                    'api_token' => config('whatsapp-bridge-settings.providers.tilow.api_token'),
-                    'sender' => config('whatsapp-bridge-settings.providers.tilow.sender'),
-                    'timeout' => (int) config('whatsapp-bridge-settings.providers.tilow.timeout', 30),
+                'twilio' => [
+                    'account_sid' => config('whatsapp-bridge-settings.providers.twilio.account_sid'),
+                    'auth_token' => config('whatsapp-bridge-settings.providers.twilio.auth_token'),
+                    'from_number' => config('whatsapp-bridge-settings.providers.twilio.from_number'),
+                    'timeout' => (int) config('whatsapp-bridge-settings.providers.twilio.timeout', 30),
                 ],
                 'meta' => [
                     'phone_number_id' => config('whatsapp-bridge-settings.providers.meta.phone_number_id'),
@@ -335,6 +405,17 @@ class WhatsappSettingsRepository
         } catch (\Throwable) {
             return false;
         }
+    }
+
+    protected function getStoredRecordId(): ?int
+    {
+        if (! $this->tableExists()) {
+            return null;
+        }
+
+        $id = DB::table(self::TABLE)->orderBy('id')->value('id');
+
+        return $id !== null ? (int) $id : null;
     }
 
     protected function maskToken(string $token): string

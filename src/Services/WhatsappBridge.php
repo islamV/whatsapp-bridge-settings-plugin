@@ -2,16 +2,29 @@
 
 namespace Islamv\WhatsappBridgeSettingsPlugin\Services;
 
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Islamv\WhatsappBridgeSettingsPlugin\Concerns\HandlesOtpMessages;
+use Islamv\WhatsappBridgeSettingsPlugin\Concerns\HasLogChannel;
+use Islamv\WhatsappBridgeSettingsPlugin\Concerns\ManagesPhoneNumbers;
 use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
 use Islamv\WhatsappBridgeSettingsPlugin\Settings\WhatsappSettingsRepository;
 
 class WhatsappBridge implements WhatsappProviderInterface
 {
+    use HandlesOtpMessages;
+    use HasLogChannel;
+    use ManagesPhoneNumbers;
+
+    public function __construct(
+        protected WhatsappSettingsRepository $settings
+    ) {}
+
     public function sendMessage(string $to, string $message, array $options = []): bool
     {
-        $config = $this->getConfig();
+        $config = $this->settings->getProviderConfig('bridge');
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             Log::channel($this->logChannel())->warning('WhatsApp bridge not configured');
@@ -22,13 +35,21 @@ class WhatsappBridge implements WhatsappProviderInterface
         $phone = $this->normalizePhone($to, $this->getDefaultCountryCode());
 
         try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->post(rtrim((string) $config['api_base_url'], '/') . '/messages', [
-                    'to' => $phone,
-                    'text' => $message,
-                    'sender' => $config['sender'] ?? null,
-                ]);
+            $response = $this->requestWithFallback(
+                $config,
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->post($this->buildSessionUrl($config, 'send-message'), [
+                        'phone' => $phone,
+                        'message' => $message,
+                    ]),
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->withToken((string) $config['api_token'])
+                    ->post(rtrim((string) $config['api_base_url'], '/') . '/messages', [
+                        'to' => $phone,
+                        'text' => $message,
+                        'sender' => $config['sender'] ?? null,
+                    ])
+            );
 
             if ($response->successful()) {
                 return true;
@@ -52,35 +73,35 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     public function sendOtp(string $to, string $otp, array $options = []): bool
     {
-        $settings = app(WhatsappSettingsRepository::class);
+        $message = $this->buildOtpMessage($otp);
 
-        if (! $settings->get('otp_enabled', true)) {
+        if ($message === null) {
             return false;
         }
-
-        $template = $settings->get('otp_template', 'Your verification code is: {otp}');
-        $message = str_replace('{otp}', $otp, (string) $template);
 
         return $this->sendMessage($to, $message, $options);
     }
 
     public function getConnectionStatus(): string
     {
-        $config = $this->getConfig();
+        $config = $this->settings->getProviderConfig('bridge');
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             return 'disconnected';
         }
 
         try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->get(rtrim((string) $config['api_base_url'], '/') . '/status');
+            $response = $this->requestWithFallback(
+                $config,
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->get($this->buildSessionUrl($config, 'check-connection-session')),
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->withToken((string) $config['api_token'])
+                    ->get(rtrim((string) $config['api_base_url'], '/') . '/status')
+            );
 
             if ($response->successful()) {
-                $data = $response->json();
-
-                return ($data['status'] ?? '') === 'connected' ? 'connected' : 'disconnected';
+                return $this->normalizeBridgeStatus($response->json());
             }
 
             return 'disconnected';
@@ -91,21 +112,26 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     public function generateQrCode(): ?string
     {
-        $config = $this->getConfig();
+        $config = $this->settings->getProviderConfig('bridge');
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             return null;
         }
 
         try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->post(rtrim((string) $config['api_base_url'], '/') . '/qr');
+            $response = $this->requestWithFallback(
+                $config,
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->post($this->buildSessionUrl($config, 'generate-token')),
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->withToken((string) $config['api_token'])
+                    ->post(rtrim((string) $config['api_base_url'], '/') . '/qr')
+            );
 
             if ($response->successful()) {
                 $data = $response->json();
 
-                return $data['qr'] ?? null;
+                return $data['qrcode'] ?? $data['qr'] ?? null;
             }
 
             return null;
@@ -120,16 +146,21 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     public function disconnect(): bool
     {
-        $config = $this->getConfig();
+        $config = $this->settings->getProviderConfig('bridge');
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             return false;
         }
 
         try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->post(rtrim((string) $config['api_base_url'], '/') . '/disconnect');
+            $response = $this->requestWithFallback(
+                $config,
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->post($this->buildSessionUrl($config, 'close-session')),
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->withToken((string) $config['api_token'])
+                    ->post(rtrim((string) $config['api_base_url'], '/') . '/disconnect')
+            );
 
             return $response->successful();
         } catch (\Throwable $e) {
@@ -143,16 +174,21 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     public function getConnectedPhone(): ?string
     {
-        $config = $this->getConfig();
+        $config = $this->settings->getProviderConfig('bridge');
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             return null;
         }
 
         try {
-            $response = Http::timeout((int) ($config['timeout'] ?? 30))
-                ->withToken((string) $config['api_token'])
-                ->get(rtrim((string) $config['api_base_url'], '/') . '/status');
+            $response = $this->requestWithFallback(
+                $config,
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->get($this->buildSessionUrl($config, 'check-connection-session')),
+                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                    ->withToken((string) $config['api_token'])
+                    ->get(rtrim((string) $config['api_base_url'], '/') . '/status')
+            );
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -166,55 +202,55 @@ class WhatsappBridge implements WhatsappProviderInterface
         }
     }
 
-    protected function getConfig(): array
-    {
-        $settings = app(WhatsappSettingsRepository::class);
-
-        return $settings->getProviderConfig('bridge');
-    }
-
     protected function getDefaultCountryCode(): string
     {
-        $settings = app(WhatsappSettingsRepository::class);
-
-        return (string) $settings->get('default_country_code', '20');
+        return (string) $this->settings->get('default_country_code', '20');
     }
 
-    protected function normalizePhone(string $phone, string $defaultCountryCode): string
+    protected function getSessionName(array $config): string
     {
-        $cleaned = preg_replace('/[^0-9]/', '', $phone) ?? '';
-
-        if ($cleaned === '') {
-            return $phone;
-        }
-
-        if (str_starts_with($cleaned, '00')) {
-            $cleaned = substr($cleaned, 2);
-        }
-
-        if (strlen($cleaned) <= 10 && ! str_starts_with($cleaned, '00')) {
-            $cleaned = ltrim($cleaned, '0');
-            $cleaned = $defaultCountryCode . $cleaned;
-        }
-
-        return $cleaned;
+        return trim((string) ($config['sender'] ?? 'default')) ?: 'default';
     }
 
-    protected function maskPhone(string $phone): string
+    protected function buildSessionUrl(array $config, string $action): string
     {
-        $len = strlen($phone);
-
-        if ($len <= 4) {
-            return str_repeat('*', $len);
-        }
-
-        return substr($phone, 0, 4) . str_repeat('*', $len - 8) . substr($phone, -4);
+        return rtrim((string) $config['api_base_url'], '/')
+            . '/api/'
+            . rawurlencode((string) $config['api_token'])
+            . '/'
+            . $action
+            . '/'
+            . rawurlencode($this->getSessionName($config));
     }
 
-    private function logChannel(): string
+    protected function requestWithFallback(array $config, callable $sessionRequest, callable $legacyRequest): Response
     {
-        $settings = app(WhatsappSettingsRepository::class);
+        try {
+            $response = $sessionRequest();
 
-        return $settings->get('log_channel') ?? config('logging.default', 'stack');
+            if ($response->status() !== 404) {
+                return $response;
+            }
+        } catch (ConnectionException) {
+            // Session-based endpoint not reachable (bridge runs legacy API only).
+            // Fall through and attempt the legacy endpoint below.
+        }
+
+        return $legacyRequest();
+    }
+
+    protected function normalizeBridgeStatus(array $data): string
+    {
+        $status = $data['status'] ?? null;
+
+        if ($status === true || $status === 'connected' || $status === 'CONNECTED') {
+            return 'connected';
+        }
+
+        if ($status === 'waiting' || $status === 'WAITING' || ! empty($data['qrcode']) || ! empty($data['qr'])) {
+            return 'waiting';
+        }
+
+        return 'disconnected';
     }
 }
