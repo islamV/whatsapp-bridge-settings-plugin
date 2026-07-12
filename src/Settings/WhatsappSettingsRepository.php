@@ -64,17 +64,25 @@ class WhatsappSettingsRepository
             );
         }
 
+        // Sync legacy flat columns from bridge provider config for backward compatibility.
+        // These columns still exist in the schema and should always reflect the current bridge settings.
+        $bridgeFinal = $providers['bridge'] ?? [];
+
         $record = [
-            'active_provider' => $activeProvider,
-            'provider_name' => $data['provider_name'] ?? $existing['provider_name'] ?? 'default',
+            'active_provider'      => $activeProvider,
+            'provider_name'        => $data['provider_name'] ?? $existing['provider_name'] ?? 'default',
             'default_country_code' => $data['default_country_code'] ?? $existing['default_country_code'] ?? '20',
-            'otp_enabled' => $data['otp_enabled'] ?? $existing['otp_enabled'] ?? true,
-            'messages_enabled' => $data['messages_enabled'] ?? $existing['messages_enabled'] ?? true,
-            'otp_template' => $data['otp_template'] ?? $existing['otp_template'] ?? null,
-            'timeout' => (int) ($data['timeout'] ?? $existing['timeout'] ?? 30),
-            'extra_settings' => isset($data['extra_settings'])
+            'otp_enabled'          => $data['otp_enabled'] ?? $existing['otp_enabled'] ?? true,
+            'messages_enabled'     => $data['messages_enabled'] ?? $existing['messages_enabled'] ?? true,
+            'otp_template'         => $data['otp_template'] ?? $existing['otp_template'] ?? null,
+            'timeout'              => (int) ($data['timeout'] ?? $existing['timeout'] ?? 30),
+            'extra_settings'       => isset($data['extra_settings'])
                 ? json_encode($data['extra_settings'])
                 : ($existing['extra_settings'] ?? null),
+            // Legacy flat columns kept in sync so DB viewers always show current bridge config.
+            'api_base_url' => $bridgeFinal['api_base_url'] ?? null,
+            'api_token'    => $bridgeFinal['api_token'] ?? null,   // stored encrypted by sanitizeProviderConfig
+            'sender'       => $bridgeFinal['sender'] ?? null,
         ];
 
         $record['providers'] = json_encode($providers);

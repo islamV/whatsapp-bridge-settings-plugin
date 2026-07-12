@@ -2,6 +2,7 @@
 
 namespace Islamv\WhatsappBridgeSettingsPlugin\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -224,10 +225,15 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     protected function requestWithFallback(array $config, callable $sessionRequest, callable $legacyRequest): Response
     {
-        $response = $sessionRequest();
+        try {
+            $response = $sessionRequest();
 
-        if ($response->status() !== 404) {
-            return $response;
+            if ($response->status() !== 404) {
+                return $response;
+            }
+        } catch (ConnectionException) {
+            // Session-based endpoint not reachable (bridge runs legacy API only).
+            // Fall through and attempt the legacy endpoint below.
         }
 
         return $legacyRequest();
