@@ -82,6 +82,49 @@ class WhatsappBridge implements WhatsappProviderInterface
         return $this->sendMessage($to, $message, $options);
     }
 
+    /**
+     * Check whether the bridge Node.js service itself is reachable via the
+     * unauthenticated GET /health endpoint. Returns an array:
+     *   ['reachable' => bool, 'status' => string|null, 'latency_ms' => int|null]
+     */
+    public function checkBridgeHealth(): array
+    {
+        $config = $this->settings->getProviderConfig('bridge');
+
+        if (empty($config['api_base_url'])) {
+            return ['reachable' => false, 'status' => null, 'latency_ms' => null];
+        }
+
+        $url = rtrim((string) $config['api_base_url'], '/') . '/health';
+
+        try {
+            $start = microtime(true);
+
+            $response = Http::timeout(10)->get($url);
+
+            $latency = (int) round((microtime(true) - $start) * 1000);
+
+            if ($response->successful()) {
+                $body = $response->json();
+
+                return [
+                    'reachable'  => true,
+                    'status'     => $body['status'] ?? 'ok',
+                    'latency_ms' => $latency,
+                ];
+            }
+
+            return ['reachable' => false, 'status' => null, 'latency_ms' => $latency];
+        } catch (\Throwable $e) {
+            Log::channel($this->logChannel())->debug('WhatsApp bridge /health check failed', [
+                'url'     => $url,
+                'message' => $e->getMessage(),
+            ]);
+
+            return ['reachable' => false, 'status' => null, 'latency_ms' => null];
+        }
+    }
+
     public function getConnectionStatus(): string
     {
         $config = $this->settings->getProviderConfig('bridge');

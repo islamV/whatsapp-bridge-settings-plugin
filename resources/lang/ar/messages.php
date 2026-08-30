@@ -56,6 +56,14 @@ return [
         'sender' => 'المرسل / معرف المثيل',
         'sender_placeholder' => 'معرف المرسل',
         'timeout' => 'المهلة (بالثواني)',
+        // قسم فحص الصحة
+        'health_title' => 'حالة خدمة الجسر',
+        'health_description' => 'يتحقق من نقطة /health في خدمة الجسر للتأكد من إمكانية الوصول إليها قبل محاولة الاتصال.',
+        'health_label' => 'إمكانية الوصول للخدمة',
+        'health_check_button' => 'فحص الخدمة',
+        'health_reachable' => 'الخدمة متاحة',
+        'health_unreachable' => 'الخدمة غير متاحة',
+        'health_not_configured' => 'غير مُعدّة',
     ],
 
     'meta' => [
