@@ -677,7 +677,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                             '<div class="flex items-center justify-between mb-3">' .
                                 '<div class="flex items-center gap-2.5">' .
                                     '<div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">' .
-                                        '<svg width="16" height="16" style="width:1rem;height:1rem;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>' .
+                                        '<svg style="width:16px!important;height:16px!important;max-width:16px!important;max-height:16px!important;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>' .
                                     '</div>' .
                                     '<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">' . e(__('whatsapp-bridge-settings::messages.bridge.bridge_api_title')) . '</span>' .
                                 '</div>' .
@@ -698,7 +698,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                             '<div class="flex items-center justify-between mb-3">' .
                                 '<div class="flex items-center gap-2.5">' .
                                     '<div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">' .
-                                        '<svg width="16" height="16" style="width:1rem;height:1rem;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>' .
+                                        '<svg style="width:16px!important;height:16px!important;max-width:16px!important;max-height:16px!important;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>' .
                                     '</div>' .
                                     '<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">' . e(__('whatsapp-bridge-settings::messages.bridge.whatsapp_title')) . '</span>' .
                                 '</div>' .
@@ -719,7 +719,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                             '<div class="flex items-center justify-between mb-3">' .
                                 '<div class="flex items-center gap-2.5">' .
                                     '<div class="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">' .
-                                        '<svg width="16" height="16" style="width:1rem;height:1rem;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>' .
+                                        '<svg style="width:16px!important;height:16px!important;max-width:16px!important;max-height:16px!important;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>' .
                                     '</div>' .
                                     '<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">' . e(__('whatsapp-bridge-settings::messages.bridge.instance_title')) . '</span>' .
                                 '</div>' .

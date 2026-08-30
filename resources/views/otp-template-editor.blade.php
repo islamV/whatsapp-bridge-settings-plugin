@@ -10,9 +10,7 @@
         <div class="lg:col-span-7 space-y-3">
             <div class="flex items-center justify-between">
                 <label class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                    <svg width="16" height="16" style="width:1rem;height:1rem;display:inline-block;" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
+                    <x-heroicon-o-pencil-square class="w-4 h-4 text-gray-400" />
                     <span>Message Editor</span>
                 </label>
                 <span x-text="(state || '').length + ' characters'" class="text-xs text-gray-400 dark:text-gray-500 font-mono"></span>
@@ -35,9 +33,7 @@
                     @click="insertOtp()"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-emerald-500/30 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 transition-all duration-150 active:scale-95 shadow-2xs cursor-pointer"
                 >
-                    <svg width="14" height="14" style="width:0.875rem;height:0.875rem;display:inline-block;" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
+                    <x-heroicon-m-plus class="w-3.5 h-3.5" />
                     <span>+ OTP Code</span>
                 </button>
 
@@ -59,9 +55,7 @@
             <div class="pt-1">
                 <template x-if="state && state.includes('{otp}')">
                     <div class="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                        <svg width="16" height="16" style="width:1rem;height:1rem;display:inline-block;" class="w-4 h-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
+                        <x-heroicon-m-check class="w-4 h-4 shrink-0 text-emerald-500" />
                         <span>✓ OTP variable included</span>
                     </div>
                 </template>
@@ -69,9 +63,7 @@
                 <template x-if="!state || !state.includes('{otp}')">
                     <div class="flex items-center justify-between p-2.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
                         <div class="flex items-center gap-2">
-                            <svg width="16" height="16" style="width:1rem;height:1rem;display:inline-block;" class="w-4 h-4 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
+                            <x-heroicon-m-exclamation-triangle class="w-4 h-4 shrink-0 text-amber-500" />
                             <span>Your template does not contain the <code class="font-bold">{otp}</code> variable.</span>
                         </div>
                         <button
@@ -118,9 +110,7 @@
                                 <div class="wrap-break-word whitespace-pre-wrap" x-html="renderPreview(state)"></div>
                                 <div class="flex items-center justify-end gap-1 text-[10px] text-gray-500 dark:text-emerald-200/70 pt-0.5">
                                     <span x-text="currentTime"></span>
-                                    <svg width="14" height="14" style="width:0.875rem;height:0.875rem;display:inline-block;" class="w-3.5 h-3.5 text-[#53bdeb]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7M5 19l4-4L19 13" />
-                                    </svg>
+                                    <x-heroicon-m-check class="w-3.5 h-3.5 text-[#53bdeb]" />
                                 </div>
                             </div>
                         </div>
