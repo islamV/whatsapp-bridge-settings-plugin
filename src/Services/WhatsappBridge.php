@@ -85,17 +85,23 @@ class WhatsappBridge implements WhatsappProviderInterface
     /**
      * Check whether the bridge Node.js service itself is reachable via the
      * unauthenticated GET /health endpoint. Returns an array:
-     *   ['reachable' => bool, 'status' => string|null, 'latency_ms' => int|null]
+     *   ['reachable' => bool, 'status' => string|null, 'latency_ms' => int|null, 'url' => string|null]
+     *
+     * Pass $baseUrl to check a specific URL (e.g. from an unsaved form field)
+     * instead of reading the stored setting.
      */
-    public function checkBridgeHealth(): array
+    public function checkBridgeHealth(?string $baseUrl = null): array
     {
-        $config = $this->settings->getProviderConfig('bridge');
-
-        if (empty($config['api_base_url'])) {
-            return ['reachable' => false, 'status' => null, 'latency_ms' => null];
+        if ($baseUrl === null) {
+            $config  = $this->settings->getProviderConfig('bridge');
+            $baseUrl = $config['api_base_url'] ?? null;
         }
 
-        $url = rtrim((string) $config['api_base_url'], '/') . '/health';
+        if (empty($baseUrl)) {
+            return ['reachable' => false, 'status' => null, 'latency_ms' => null, 'url' => null];
+        }
+
+        $url = rtrim((string) $baseUrl, '/') . '/health';
 
         try {
             $start = microtime(true);
@@ -111,17 +117,18 @@ class WhatsappBridge implements WhatsappProviderInterface
                     'reachable'  => true,
                     'status'     => $body['status'] ?? 'ok',
                     'latency_ms' => $latency,
+                    'url'        => $url,
                 ];
             }
 
-            return ['reachable' => false, 'status' => null, 'latency_ms' => $latency];
+            return ['reachable' => false, 'status' => null, 'latency_ms' => $latency, 'url' => $url];
         } catch (\Throwable $e) {
             Log::channel($this->logChannel())->debug('WhatsApp bridge /health check failed', [
                 'url'     => $url,
                 'message' => $e->getMessage(),
             ]);
 
-            return ['reachable' => false, 'status' => null, 'latency_ms' => null];
+            return ['reachable' => false, 'status' => null, 'latency_ms' => null, 'url' => $url];
         }
     }
 
@@ -153,38 +160,86 @@ class WhatsappBridge implements WhatsappProviderInterface
         }
     }
 
-    public function generateQrCode(): ?string
+    /**
+     * Attempt to obtain a QR code from the bridge.
+     *
+     * Returns an array describing the outcome:
+     *   ['qrcode' => string|null, 'reason' => 'qr'|'connected'|'not_configured'|'unreachable'|'auth_failed'|'timeout'|'error']
+     */
+    public function generateQrCodeResult(): array
     {
         $config = $this->settings->getProviderConfig('bridge');
 
-        if (! $config['api_base_url'] || ! $config['api_token']) {
-            return null;
+        if (empty($config['api_base_url']) || empty($config['api_token'])) {
+            return ['qrcode' => null, 'reason' => 'not_configured'];
         }
+
+        // QR generation blocks until whatsapp-web.js fires the `qr` event –
+        // this can take 15-30 s. Use a much longer timeout than regular calls.
+        $configuredTimeout = (int) ($config['timeout'] ?? 30);
+        $qrTimeout = max(90, $configuredTimeout * 3);
 
         try {
             $response = $this->requestWithFallback(
                 $config,
-                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                fn () => Http::timeout($qrTimeout)
                     ->post($this->buildSessionUrl($config, 'generate-token')),
-                fn () => Http::timeout((int) ($config['timeout'] ?? 30))
+                fn () => Http::timeout($qrTimeout)
                     ->withToken((string) $config['api_token'])
                     ->post(rtrim((string) $config['api_base_url'], '/') . '/qr')
             );
 
-            if ($response->successful()) {
-                $data = $response->json();
+            $status = $response->status();
 
-                return $data['qrcode'] ?? $data['qr'] ?? null;
+            if ($response->successful()) {
+                $data   = $response->json();
+                $qrcode = $data['qrcode'] ?? $data['qr'] ?? null;
+
+                if ($qrcode === null) {
+                    // Bridge already authenticated – no QR needed.
+                    return ['qrcode' => null, 'reason' => 'connected'];
+                }
+
+                return ['qrcode' => $qrcode, 'reason' => 'qr'];
             }
 
-            return null;
+            $reason = match ($status) {
+                401, 403 => 'auth_failed',
+                408       => 'timeout',
+                default   => 'error',
+            };
+
+            Log::channel($this->logChannel())->warning('WhatsApp generateQrCode non-success', [
+                'http_status' => $status,
+                'body'        => $response->body(),
+                'reason'      => $reason,
+            ]);
+
+            return ['qrcode' => null, 'reason' => $reason];
+
+        } catch (ConnectionException $e) {
+            Log::channel($this->logChannel())->error('WhatsApp generateQrCode connection error', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return ['qrcode' => null, 'reason' => 'unreachable'];
+
         } catch (\Throwable $e) {
             Log::channel($this->logChannel())->error('WhatsApp generateQrCode exception', [
                 'message' => $e->getMessage(),
             ]);
 
-            return null;
+            return ['qrcode' => null, 'reason' => 'error'];
         }
+    }
+
+    /**
+     * Interface-compatible wrapper. Returns the QR code string or null.
+     * Prefer generateQrCodeResult() when calling from WhatsappBridge directly.
+     */
+    public function generateQrCode(): ?string
+    {
+        return $this->generateQrCodeResult()['qrcode'];
     }
 
     public function disconnect(): bool
