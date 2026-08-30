@@ -65,6 +65,18 @@ return [
         'health_unreachable' => 'Service Unreachable',
         'health_not_configured' => 'Not Configured',
         'health_enter_url_hint' => 'Enter the API Base URL above and click “Check Service”',
+        // Overview card
+        'overview_title'       => 'Connection Overview',
+        'overview_description' => 'Real-time status of your bridge service and WhatsApp session.',
+        'bridge_api_label'     => 'Bridge API',
+        'whatsapp_label'       => 'WhatsApp',
+        'instance_label'       => 'Instance',
+        'no_instance'          => '—',
+        'save_changes'         => 'Save Changes',
+        'request_timeout'      => 'Request Timeout',
+        'timeout_suffix'       => 'seconds',
+        'bridge_unavailable_title' => 'Bridge service unavailable',
+        'bridge_unavailable_body'  => 'Make sure the bridge service is running before connecting WhatsApp.',
     ],
 
     'meta' => [

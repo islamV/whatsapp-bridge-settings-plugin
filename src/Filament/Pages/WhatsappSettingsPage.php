@@ -18,7 +18,7 @@ use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Schemas\Components\Utilities\Get;
+
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
@@ -129,13 +129,14 @@ class WhatsappSettingsPage extends Page implements HasForms
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.bridge'))
                             ->icon('heroicon-o-link')
                             ->schema([
-                                // ── Bridge Service Health ──────────────────────────────────────
-                                Section::make(__('whatsapp-bridge-settings::messages.bridge.health_title'))
-                                    ->description(__('whatsapp-bridge-settings::messages.bridge.health_description'))
+
+                                // ── Connection Overview ──────────────────────────────────────────
+                                Section::make(__('whatsapp-bridge-settings::messages.bridge.overview_title'))
+                                    ->description(__('whatsapp-bridge-settings::messages.bridge.overview_description'))
                                     ->schema([
-                                        Placeholder::make('bridge_health_status')
-                                            ->label(__('whatsapp-bridge-settings::messages.bridge.health_label'))
-                                            ->content(fn (): HtmlString => $this->renderBridgeHealthBadge()),
+                                        Placeholder::make('connection_overview')
+                                            ->label('')
+                                            ->content(fn (): HtmlString => $this->renderConnectionOverview()),
                                         Actions::make([
                                             Action::make('checkBridgeHealth')
                                                 ->label(__('whatsapp-bridge-settings::messages.bridge.health_check_button'))
@@ -143,47 +144,6 @@ class WhatsappSettingsPage extends Page implements HasForms
                                                 ->color('gray')
                                                 ->outlined()
                                                 ->action('checkBridgeHealth'),
-                                        ]),
-                                    ]),
-                                // ── Bridge Connection Settings ─────────────────────────────────
-                                Section::make(__('whatsapp-bridge-settings::messages.bridge.card_title'))
-                                    ->description(__('whatsapp-bridge-settings::messages.bridge.card_description'))
-                                    ->columns(2)
-                                    ->schema([
-                                        TextInput::make('providers.bridge.api_base_url')
-                                            ->label(__('whatsapp-bridge-settings::messages.bridge.api_base_url'))
-                                            ->placeholder(__('whatsapp-bridge-settings::messages.fields.api_base_url_placeholder'))
-                                            ->url(),
-                                        TextInput::make('providers.bridge.api_token')
-                                            ->label(__('whatsapp-bridge-settings::messages.bridge.api_token'))
-                                            ->placeholder(__('whatsapp-bridge-settings::messages.bridge.api_token_placeholder'))
-                                            ->password()
-                                            ->revealable(),
-                                        TextInput::make('providers.bridge.sender')
-                                            ->label(__('whatsapp-bridge-settings::messages.bridge.sender'))
-                                            ->placeholder(__('whatsapp-bridge-settings::messages.bridge.sender_placeholder')),
-                                        TextInput::make('providers.bridge.timeout')
-                                            ->label(__('whatsapp-bridge-settings::messages.bridge.timeout'))
-                                            ->numeric()
-                                            ->minValue(1)
-                                            ->maxValue(300)
-                                            ->default(30),
-                                    ]),
-                                Actions::make([
-                                    Action::make('saveBridge')
-                                        ->label(__('whatsapp-bridge-settings::messages.general.save'))
-                                        ->icon('heroicon-o-check')
-                                        ->color('success')
-                                        ->action('saveBridge'),
-                                ]),
-                                Section::make(__('whatsapp-bridge-settings::messages.tabs.status'))
-                                    ->description(__('whatsapp-bridge-settings::messages.status.description'))
-                                    ->hidden(fn (Get $get): bool => $get('active_provider') !== 'bridge')
-                                    ->schema([
-                                        Placeholder::make('bridge_status_summary')
-                                            ->label(__('whatsapp-bridge-settings::messages.status.current'))
-                                            ->content(fn (): HtmlString => $this->renderConnectionSummary()),
-                                        Actions::make([
                                             Action::make('refreshStatus')
                                                 ->label(__('whatsapp-bridge-settings::messages.status.refresh'))
                                                 ->icon('heroicon-o-arrow-path')
@@ -205,6 +165,44 @@ class WhatsappSettingsPage extends Page implements HasForms
                                                 ->hidden(fn (): bool => $this->status === 'disconnected'),
                                         ]),
                                     ]),
+
+                                // ── Connection Settings ──────────────────────────────────────────
+                                Section::make(__('whatsapp-bridge-settings::messages.bridge.card_title'))
+                                    ->description(__('whatsapp-bridge-settings::messages.bridge.card_description'))
+                                    ->columns(2)
+                                    ->schema([
+                                        TextInput::make('providers.bridge.api_base_url')
+                                            ->label(__('whatsapp-bridge-settings::messages.bridge.api_base_url'))
+                                            ->placeholder(__('whatsapp-bridge-settings::messages.fields.api_base_url_placeholder'))
+                                            ->url()
+                                            ->columnSpan(1),
+                                        TextInput::make('providers.bridge.api_token')
+                                            ->label(__('whatsapp-bridge-settings::messages.bridge.api_token'))
+                                            ->placeholder(__('whatsapp-bridge-settings::messages.bridge.api_token_placeholder'))
+                                            ->password()
+                                            ->revealable()
+                                            ->columnSpan(1),
+                                        TextInput::make('providers.bridge.sender')
+                                            ->label(__('whatsapp-bridge-settings::messages.bridge.sender'))
+                                            ->placeholder(__('whatsapp-bridge-settings::messages.bridge.sender_placeholder'))
+                                            ->columnSpan(1),
+                                        TextInput::make('providers.bridge.timeout')
+                                            ->label(__('whatsapp-bridge-settings::messages.bridge.request_timeout'))
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->maxValue(300)
+                                            ->default(30)
+                                            ->suffix(__('whatsapp-bridge-settings::messages.bridge.timeout_suffix'))
+                                            ->columnSpan(1),
+                                        Actions::make([
+                                            Action::make('saveBridge')
+                                                ->label(__('whatsapp-bridge-settings::messages.bridge.save_changes'))
+                                                ->icon('heroicon-o-check')
+                                                ->color('success')
+                                                ->action('saveBridge'),
+                                        ])->columnSpanFull(),
+                                    ]),
+
                             ]),
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.meta'))
                             ->schema([
@@ -530,97 +528,148 @@ class WhatsappSettingsPage extends Page implements HasForms
             ->all();
     }
 
-    protected function renderConnectionSummary(): HtmlString
+    protected function renderConnectionOverview(): HtmlString
     {
-        $label = match ($this->status) {
-            'connected' => __('whatsapp-bridge-settings::messages.status.connected'),
-            'waiting' => __('whatsapp-bridge-settings::messages.status.waiting'),
-            default => __('whatsapp-bridge-settings::messages.status.disconnected'),
-        };
-
-        $color = match ($this->status) {
-            'connected' => 'success',
-            'waiting' => 'warning',
-            default => 'danger',
-        };
-
-        $phone = $this->connectedPhone
-            ? '<p class="text-sm text-gray-600 dark:text-gray-300">' . e(__('whatsapp-bridge-settings::messages.qr.connected_phone', ['phone' => $this->connectedPhone])) . '</p>'
-            : '';
-
-        $qr = '';
-
-        if ($this->status === 'waiting') {
-            if ($this->qrCode && (str_starts_with($this->qrCode, 'data:image') || str_contains($this->qrCode, 'base64'))) {
-                $qr = '<div class="mt-4"><img src="' . e($this->qrCode) . '" alt="' . e(__('whatsapp-bridge-settings::messages.qr.qr_image_alt')) . '" class="max-w-xs rounded-xl border border-gray-200 bg-white p-3" /></div>';
-            } elseif ($this->qrCode) {
-                $qr = '<div class="mt-4 rounded-xl border border-gray-200 bg-white p-3">' . $this->qrCode . '</div>';
-            } else {
-                $qr = '<p class="mt-4 text-sm text-gray-600 dark:text-gray-300">' . e(__('whatsapp-bridge-settings::messages.qr.qr_generating')) . '</p>';
-            }
-        }
-
-        return new HtmlString(
-            '<div class="space-y-3">' .
-                '<span class="fi-badge fi-color-' . $color . '">' . e($label) . '</span>' .
-                $phone .
-                $qr .
-            '</div>'
-        );
-    }
-
-    protected function renderBridgeHealthBadge(): HtmlString
-    {
+        // ── Bridge API status ────────────────────────────────────────────────
         $reachable     = $this->bridgeHealth['reachable'] ?? false;
         $latency       = $this->bridgeHealth['latency_ms'] ?? null;
         $serviceStatus = $this->bridgeHealth['status'] ?? null;
         $checkedUrl    = $this->bridgeHealth['url'] ?? null;
+        $formUrl       = data_get($this->data, 'providers.bridge.api_base_url');
+        $hasUrl        = ! empty($formUrl) || ! empty($checkedUrl);
+        $displayUrl    = $formUrl ?: ($checkedUrl ? rtrim(str_replace('/health', '', $checkedUrl), '/') : null);
 
         if ($reachable) {
-            $badgeClasses = 'inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:ring-green-400/20';
-            $dot          = '<span class="relative inline-flex h-2 w-2">' .
-                                '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>' .
-                                '<span class="relative inline-flex h-2 w-2 rounded-full bg-green-500 dark:bg-green-400"></span>' .
-                            '</span>';
-            $label        = __('whatsapp-bridge-settings::messages.bridge.health_reachable');
-            $detail       = $latency !== null
-                ? '<span class="text-xs text-gray-500 dark:text-gray-400">(' . e($latency) . ' ms)</span>'
-                : '';
-            if ($serviceStatus && $serviceStatus !== 'ok') {
-                $detail .= ' <span class="text-xs text-gray-500 dark:text-gray-400">— ' . e($serviceStatus) . '</span>';
-            }
+            $apiDot    = '<span class="relative inline-flex h-2 w-2">' .
+                             '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>' .
+                             '<span class="relative inline-flex h-2 w-2 rounded-full bg-green-500 dark:bg-green-400"></span>' .
+                         '</span>';
+            $apiBadge  = 'inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:ring-green-400/20';
+            $apiLabel  = e(__('whatsapp-bridge-settings::messages.bridge.health_reachable'));
+            $apiDetail = $latency !== null ? '<span class="text-xs text-gray-400 dark:text-gray-500">(' . e($latency) . ' ms)</span>' : '';
+        } elseif (! $hasUrl) {
+            $apiDot    = '<span class="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500 animate-pulse"></span>';
+            $apiBadge  = 'inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20';
+            $apiLabel  = e(__('whatsapp-bridge-settings::messages.bridge.health_not_configured'));
+            $apiDetail = '';
         } else {
-            $formUrl = data_get($this->data, 'providers.bridge.api_base_url');
-            $hasUrl  = ! empty($formUrl) || ! empty($checkedUrl);
+            $apiDot    = '<span class="relative inline-flex h-2 w-2">' .
+                             '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>' .
+                             '<span class="relative inline-flex h-2 w-2 rounded-full bg-red-500 dark:bg-red-400"></span>' .
+                         '</span>';
+            $apiBadge  = 'inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-400/10 dark:text-red-400 dark:ring-red-400/20';
+            $apiLabel  = e(__('whatsapp-bridge-settings::messages.bridge.health_unreachable'));
+            $apiDetail = '';
+        }
 
-            if (! $hasUrl) {
-                $badgeClasses = 'inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20';
-                $dot          = '<span class="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500 animate-pulse"></span>';
-                $label        = __('whatsapp-bridge-settings::messages.bridge.health_not_configured');
-                $detail       = '<span class="text-xs text-gray-400">' .
-                    e(__('whatsapp-bridge-settings::messages.bridge.health_enter_url_hint')) .
-                    '</span>';
+        $urlRow = $displayUrl
+            ? '<p class="mt-1 font-mono text-xs text-gray-400 dark:text-gray-500 truncate max-w-45">' . e(preg_replace('#^https?://#', '', $displayUrl)) . '</p>'
+            : '';
+
+        // ── WhatsApp connection status ───────────────────────────────────────
+        $waLabel = match ($this->status) {
+            'connected'    => __('whatsapp-bridge-settings::messages.status.connected'),
+            'waiting'      => __('whatsapp-bridge-settings::messages.status.waiting'),
+            default        => __('whatsapp-bridge-settings::messages.status.disconnected'),
+        };
+
+        [$waDot, $waBadge] = match ($this->status) {
+            'connected' => [
+                '<span class="relative inline-flex h-2 w-2">' .
+                    '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>' .
+                    '<span class="relative inline-flex h-2 w-2 rounded-full bg-green-500 dark:bg-green-400"></span>' .
+                '</span>',
+                'inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:ring-green-400/20',
+            ],
+            'waiting' => [
+                '<span class="relative inline-flex h-2 w-2">' .
+                    '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>' .
+                    '<span class="relative inline-flex h-2 w-2 rounded-full bg-amber-500 dark:bg-amber-400"></span>' .
+                '</span>',
+                'inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:ring-amber-400/20',
+            ],
+            default => [
+                '<span class="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500 animate-pulse"></span>',
+                'inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20',
+            ],
+        };
+
+        $phoneRow = $this->connectedPhone
+            ? '<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">' . e($this->connectedPhone) . '</p>'
+            : '';
+
+        // ── Instance / Sender ────────────────────────────────────────────────
+        $sender       = data_get($this->data, 'providers.bridge.sender') ?: __('whatsapp-bridge-settings::messages.bridge.no_instance');
+        $instanceHtml = '<p class="mt-1 text-sm font-medium text-gray-700 dark:text-gray-300">' . e($sender) . '</p>';
+
+        // ── QR code (waiting state) ──────────────────────────────────────────
+        $qrHtml = '';
+        if ($this->status === 'waiting') {
+            if ($this->qrCode && (str_starts_with($this->qrCode, 'data:image') || str_contains($this->qrCode, 'base64'))) {
+                $qrHtml = '<div class="mt-5 border-t border-gray-100 dark:border-white/10 pt-4">' .
+                              '<p class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">' . e(__('whatsapp-bridge-settings::messages.qr.qr_scan_title')) . '</p>' .
+                              '<img src="' . e($this->qrCode) . '" alt="' . e(__('whatsapp-bridge-settings::messages.qr.qr_image_alt')) . '" class="max-w-45 rounded-xl border border-gray-200 dark:border-white/10 bg-white p-2" />' .
+                          '</div>';
+            } elseif ($this->qrCode) {
+                $qrHtml = '<div class="mt-5 border-t border-gray-100 dark:border-white/10 pt-4">' .
+                              '<div class="rounded-xl border border-gray-200 dark:border-white/10 bg-white p-3 max-w-55">' . $this->qrCode . '</div>' .
+                          '</div>';
             } else {
-                $badgeClasses = 'inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-400/10 dark:text-red-400 dark:ring-red-400/20';
-                $dot          = '<span class="relative inline-flex h-2 w-2">' .
-                                    '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>' .
-                                    '<span class="relative inline-flex h-2 w-2 rounded-full bg-red-500 dark:bg-red-400"></span>' .
-                                '</span>';
-                $label        = __('whatsapp-bridge-settings::messages.bridge.health_unreachable');
-                $detail       = $latency !== null
-                    ? '<span class="text-xs text-gray-500 dark:text-gray-400">(' . e($latency) . ' ms)</span>'
-                    : '';
+                $qrHtml = '<p class="mt-4 text-sm text-gray-500 dark:text-gray-400">' . e(__('whatsapp-bridge-settings::messages.qr.qr_generating')) . '</p>';
             }
         }
 
-        return new HtmlString(
-            '<div class="flex items-center gap-2">' .
-                '<span class="' . $badgeClasses . '">' .
-                    $dot .
-                    e($label) .
-                '</span>' .
-                $detail .
-            '</div>'
-        );
+        // ── Bridge unavailable warning (when URL set but unreachable) ────────
+        $warningHtml = '';
+        if (! $reachable && $hasUrl) {
+            $warningHtml =
+                '<div class="mt-4 rounded-lg border border-red-200 bg-red-50 dark:border-red-500/20 dark:bg-red-400/10 px-4 py-3 flex items-start gap-3">' .
+                '<svg class="mt-0.5 h-4 w-4 shrink-0 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">' .
+                        '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />' .
+                    '</svg>' .
+                    '<div>' .
+                        '<p class="text-sm font-medium text-red-700 dark:text-red-400">' . e(__('whatsapp-bridge-settings::messages.bridge.bridge_unavailable_title')) . '</p>' .
+                        '<p class="mt-0.5 text-xs text-red-600 dark:text-red-300">' . e(__('whatsapp-bridge-settings::messages.bridge.bridge_unavailable_body')) . '</p>' .
+                    '</div>' .
+                '</div>';
+        }
+
+        // ── Assemble 3-column grid ───────────────────────────────────────────
+        $grid =
+            '<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">' .
+
+                // Bridge API column
+                '<div>' .
+                    '<p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">' .
+                        e(__('whatsapp-bridge-settings::messages.bridge.bridge_api_label')) .
+                    '</p>' .
+                    '<div class="flex items-center gap-2">' .
+                        '<span class="' . $apiBadge . '">' . $apiDot . $apiLabel . '</span>' .
+                        $apiDetail .
+                    '</div>' .
+                    $urlRow .
+                '</div>' .
+
+                // WhatsApp column
+                '<div>' .
+                    '<p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">' .
+                        e(__('whatsapp-bridge-settings::messages.bridge.whatsapp_label')) .
+                    '</p>' .
+                    '<span class="' . $waBadge . '">' . $waDot . e($waLabel) . '</span>' .
+                    $phoneRow .
+                '</div>' .
+
+                // Instance column
+                '<div>' .
+                    '<p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">' .
+                        e(__('whatsapp-bridge-settings::messages.bridge.instance_label')) .
+                    '</p>' .
+                    $instanceHtml .
+                '</div>' .
+
+            '</div>';
+
+        return new HtmlString($grid . $warningHtml . $qrHtml);
     }
 }
+

@@ -65,6 +65,18 @@ return [
         'health_unreachable' => 'الخدمة غير متاحة',
         'health_not_configured' => 'غير مُعدّة',
         'health_enter_url_hint' => 'أدخل رابط API الأساسي أعلاه ثم اضغط «فحص الخدمة»',
+        // بطاقة النظرة العامة
+        'overview_title'       => 'نظرة عامة على الاتصال',
+        'overview_description' => 'حالة خدمة الجسر وجلسة واتساب في الوقت الفعلي.',
+        'bridge_api_label'     => 'Bridge API',
+        'whatsapp_label'       => 'واتساب',
+        'instance_label'       => 'المثيل',
+        'no_instance'          => '—',
+        'save_changes'         => 'حفظ التغييرات',
+        'request_timeout'      => 'مهلة الطلب',
+        'timeout_suffix'       => 'ثانية',
+        'bridge_unavailable_title' => 'خدمة الجسر غير متاحة',
+        'bridge_unavailable_body'  => 'تأكد من تشغيل خدمة الجسر قبل محاولة الاتصال بواتساب.',
     ],
 
     'meta' => [
