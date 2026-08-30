@@ -110,7 +110,10 @@
                                 <div class="wrap-break-word whitespace-pre-wrap" x-html="renderPreview(state)"></div>
                                 <div class="flex items-center justify-end gap-1 text-[10px] text-gray-500 dark:text-emerald-200/70 pt-0.5">
                                     <span x-text="currentTime"></span>
-                                    <x-heroicon-m-check class="w-3.5 h-3.5 text-[#53bdeb]" />
+                                    <div class="inline-flex items-center -space-x-1 text-[#53bdeb]">
+                                        <x-heroicon-m-check class="w-3.5 h-3.5" />
+                                        <x-heroicon-m-check class="w-3.5 h-3.5" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
