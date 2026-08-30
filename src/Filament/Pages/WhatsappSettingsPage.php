@@ -19,7 +19,7 @@ use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Schemas\Components\Utilities\Get;
+
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
@@ -127,11 +127,12 @@ class WhatsappSettingsPage extends Page implements HasForms
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.bridge'))
                             ->icon('heroicon-o-link')
                             ->schema([
-                                // ── Connection Overview Dashboard ──────────────────────────────────
+
+                                // ── Connection Overview ──────────────────────────────────────────
                                 Section::make(__('whatsapp-bridge-settings::messages.bridge.overview_title'))
                                     ->description(__('whatsapp-bridge-settings::messages.bridge.overview_description'))
                                     ->schema([
-                                        Placeholder::make('connection_overview_dashboard')
+                                        Placeholder::make('connection_overview')
                                             ->label('')
                                             ->content(fn (): HtmlString => $this->renderConnectionOverview()),
                                         Actions::make([
@@ -163,7 +164,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                                         ]),
                                     ]),
 
-                                // ── Bridge Connection Settings ───────────────────────────────────
+                                // ── Connection Settings ──────────────────────────────────────────
                                 Section::make(__('whatsapp-bridge-settings::messages.bridge.card_title'))
                                     ->description(__('whatsapp-bridge-settings::messages.bridge.card_description'))
                                     ->columns(2)
@@ -199,6 +200,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                                                 ->action('saveBridge'),
                                         ])->columnSpanFull(),
                                     ]),
+
                             ]),
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.meta'))
                             ->schema([
@@ -745,3 +747,4 @@ class WhatsappSettingsPage extends Page implements HasForms
         return new HtmlString($dashboardHtml);
     }
 }
+
