@@ -4,9 +4,9 @@ namespace Livewire\Features\SupportFileUploads;
 
 use Illuminate\Support\Arr;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Storage;
 use League\MimeTypeDetection\FinfoMimeTypeDetector;
+use Livewire\Facades\GenerateSignedUploadUrlFacade;
 
 class TemporaryUploadedFile extends UploadedFile
 {
@@ -14,6 +14,7 @@ class TemporaryUploadedFile extends UploadedFile
     protected $storage;
     protected $path;
     protected $metaFileData;
+    protected $detectedMimeType;
 
     public function __construct($path, $disk)
     {
@@ -77,17 +78,30 @@ class TemporaryUploadedFile extends UploadedFile
             }
         }
 
-        $mimeType = $this->storage->mimeType($this->path);
+        return $this->detectedMimeType ??= $this->detectMimeTypeFromContents();
+    }
 
-        // Flysystem V2.0+ removed guess mimeType from extension support, so it has been re-added back
-        // in here to ensure the correct mimeType is returned when using faked files in tests
-        if (in_array($mimeType, ['application/octet-stream', 'inode/x-empty', 'application/x-empty'])) {
-            $detector = new FinfoMimeTypeDetector();
+    protected function detectMimeTypeFromContents(): string
+    {
+        $stream = $this->storage->readStream($this->path);
 
-            $mimeType = $detector->detectMimeTypeFromPath($this->path) ?: 'text/plain';
+        if (! is_resource($stream)) {
+            return 'application/octet-stream';
         }
 
-        return $mimeType;
+        try {
+            // Avoid downloading the entire object when the temporary disk is remote...
+            $contents = stream_get_contents($stream, 64 * 1024);
+        } finally {
+            fclose($stream);
+        }
+
+        if ($contents === false || $contents === '') {
+            return 'application/octet-stream';
+        }
+
+        return (new FinfoMimeTypeDetector())->detectMimeTypeFromBuffer($contents)
+            ?: 'application/octet-stream';
     }
 
     public function getFilename(): string
@@ -136,7 +150,7 @@ class TemporaryUploadedFile extends UploadedFile
             return $this->storage->temporaryUrl($this->path, now()->addDay());
         }
 
-        return URL::temporarySignedRoute(
+        return GenerateSignedUploadUrlFacade::signedRoute(
             'livewire.preview-file', now()->addMinutes(30)->endOfHour(), ['filename' => $this->getFilename()]
         );
     }
@@ -180,14 +194,9 @@ class TemporaryUploadedFile extends UploadedFile
 
         $newPath = trim($path.'/'.$name, '/');
 
-        // Same disk and no extra options — move instead of copy for performance.
-        if ($this->disk === $disk && empty($options)) {
-            Storage::disk($disk)->move($this->path, $newPath);
-        } else {
-            Storage::disk($disk)->put(
-                $newPath, $this->storage->readStream($this->path), $options
-            );
-        }
+        Storage::disk($disk)->put(
+            $newPath, $this->storage->readStream($this->path), $options
+        );
 
         return $newPath;
     }
@@ -307,13 +316,20 @@ class TemporaryUploadedFile extends UploadedFile
     {
         if (is_string($subject)) {
             if (str($subject)->startsWith('livewire-file:')) {
-                return static::createFromLivewire(str($subject)->after('livewire-file:'));
+                $path = static::extractPathFromSignedPath(str($subject)->after('livewire-file:'));
+
+                return $path === false ? null : static::createFromLivewire($path);
             }
 
             if (str($subject)->startsWith('livewire-files:')) {
-                $paths = json_decode(str($subject)->after('livewire-files:'), true);
+                $signedPaths = json_decode(str($subject)->after('livewire-files:'), true) ?: [];
 
-                return collect($paths)->map(function ($path) { return static::createFromLivewire($path); })->toArray();
+                return collect($signedPaths)
+                    ->map(function ($signedPath) { return static::extractPathFromSignedPath($signedPath); })
+                    ->filter(function ($path) { return $path !== false; })
+                    ->map(function ($path) { return static::createFromLivewire($path); })
+                    ->values()
+                    ->all();
             }
         }
 
@@ -328,11 +344,13 @@ class TemporaryUploadedFile extends UploadedFile
 
     public function serializeForLivewireResponse()
     {
-        return 'livewire-file:'.$this->getFilename();
+        return 'livewire-file:'.static::signPath($this->getFilename());
     }
 
     public static function serializeMultipleForLivewireResponse($files)
     {
-        return 'livewire-files:'.json_encode(collect($files)->map->getFilename());
+        return 'livewire-files:'.json_encode(collect($files)->map(function ($file) {
+            return static::signPath($file->getFilename());
+        }));
     }
 }

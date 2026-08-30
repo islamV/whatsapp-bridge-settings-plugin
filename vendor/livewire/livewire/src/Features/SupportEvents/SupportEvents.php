@@ -6,10 +6,10 @@ use function Livewire\wrap;
 use function Livewire\store;
 use function Livewire\invade;
 use Livewire\Features\SupportAttributes\AttributeLevel;
+use Livewire\Drawer\Utils;
 use Livewire\ComponentHook;
 use Livewire\Exceptions\EventHandlerDoesNotExist;
 use Livewire\Features\SupportAuthorization\BaseAuthorize;
-use Livewire\Mechanisms\HandleComponents\BaseRenderless;
 
 class SupportEvents extends ComponentHook
 {
@@ -26,11 +26,18 @@ class SupportEvents extends ComponentHook
 
             $method = static::getListenerMethodName($this->component, $name);
 
+            // Listeners resolve to a method defined on the component itself
+            // (or a magic action like "$refresh"), matching the way regular
+            // actions are resolved...
+            if (! str_starts_with($method, '$') && ! in_array($method, Utils::getPublicMethodsDefinedBySubClass($this->component))) {
+                throw new EventHandlerDoesNotExist($name);
+            }
+
             // Run any authorization checks on the listener method since
             // its normal "call" hook doesn't get run when the method
             // is called as an event listener...
             $this->component->getAttributes()
-                ->filter(fn ($i) => is_subclass_of($i, BaseAuthorize::class))
+                ->filter(fn ($i) => $i instanceof BaseAuthorize)
                 ->filter(fn ($i) => $i->getName() === $method)
                 ->filter(fn ($i) => $i->getLevel() === AttributeLevel::METHOD)
                 ->each(fn ($i) => $i->call($params));
@@ -38,26 +45,15 @@ class SupportEvents extends ComponentHook
             $returnEarly(
                 wrap($this->component)->$method(...$params)
             );
-
-            // Here we have to manually check to see if the event listener method
-            // is "renderless" as it's normal "call" hook doesn't get run when
-            // the method is called as an event listener...
-            $isRenderless = $this->component->getAttributes()
-                ->filter(fn ($i) => is_subclass_of($i, BaseRenderless::class))
-                ->filter(fn ($i) => $i->getName() === $method)
-                ->filter(fn ($i) => $i->getLevel() === AttributeLevel::METHOD)
-                ->count() > 0;
-
-            if ($isRenderless) $this->component->skipRender();
         }
     }
 
     function dehydrate($context)
     {
         // Don't register listeners until a lazy component has fully mounted...
-        if (store($this->component)->get('isLazyLoadMounting') === true) return;
+        if ($this->storeGet('isLazyLoadMounting') === true) return;
 
-        if ($context->isMounting() || store($this->component)->get('isLazyLoadHydrating') === true) {
+        if ($context->isMounting() || $this->storeGet('isLazyLoadHydrating') === true) {
             $listeners = static::getListenerEventNames($this->component);
 
             $listeners && $context->addEffect('listeners', $listeners);

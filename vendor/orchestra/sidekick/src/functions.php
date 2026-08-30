@@ -5,6 +5,7 @@ namespace Orchestra\Sidekick;
 use BackedEnum;
 use Closure;
 use Composer\InstalledVersions;
+use Composer\Semver\Semver;
 use Composer\Semver\VersionParser;
 use Illuminate\Contracts\Foundation\Application as ApplicationContract;
 use Illuminate\Foundation\Application;
@@ -83,7 +84,7 @@ if (! \function_exists('Orchestra\Sidekick\join_paths')) {
      *
      * @api
      *
-     * @deprecated
+     * @see \Orchestra\Sidekick\Filesystem\join_paths
      */
     function join_paths(?string $basePath, string ...$paths): string
     {
@@ -144,7 +145,7 @@ if (! \function_exists('Orchestra\Sidekick\is_symlink')) {
      *
      * @api
      *
-     * @deprecated
+     * @see \Orchestra\Sidekick\Filesystem\is_symlink
      */
     function is_symlink(string $path): bool
     {
@@ -247,7 +248,7 @@ if (! \function_exists('Orchestra\Sidekick\laravel_normalize_version')) {
         $version = transform(
             Application::VERSION,
             fn (string $version) => match ($version) {
-                '13.x-dev' => '13.0.0',
+                '14.x-dev' => '14.0.0',
                 default => $version,
             }
         );
@@ -274,7 +275,7 @@ if (! \function_exists('Orchestra\Sidekick\phpunit_normalize_version')) {
         $version = transform(
             Version::id(),
             fn (string $version) => match (true) {
-                str_starts_with($version, '13.0-') => '13.0.0',
+                str_starts_with($version, '13.3-') => '13.3.0',
                 default => $version,
             }
         );
@@ -337,7 +338,18 @@ if (! \function_exists('Orchestra\Sidekick\package_version_compare')) {
         $prettyVersion = InstalledVersions::getPrettyVersion($package);
 
         if (\is_null($prettyVersion)) {
-            throw new RuntimeException(\sprintf('Unable to compare "%s" version', $package));
+            if (array_search($package, InstalledVersions::getInstalledPackages()) === false) {
+                throw new RuntimeException(\sprintf('Unable to compare "%s" version', $package));
+            }
+
+            $versionRanges = array_map(
+                fn ($version) => (new VersionParser)->normalize($version),
+                explode(' || ', InstalledVersions::getVersionRanges($package))
+            );
+
+            return ! empty(
+                Semver::satisfiedBy($versionRanges, \sprintf('%s%s', $operator ?? '=', $version))
+            );
         }
 
         $versionParser = new VersionParser;
