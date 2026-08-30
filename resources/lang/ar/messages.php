@@ -64,6 +64,7 @@ return [
         'health_reachable' => 'الخدمة متاحة',
         'health_unreachable' => 'الخدمة غير متاحة',
         'health_not_configured' => 'غير مُعدّة',
+        'health_enter_url_hint' => 'أدخل رابط API الأساسي أعلاه ثم اضغط «فحص الخدمة»',
     ],
 
     'meta' => [

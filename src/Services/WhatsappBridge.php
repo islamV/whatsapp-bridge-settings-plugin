@@ -85,17 +85,23 @@ class WhatsappBridge implements WhatsappProviderInterface
     /**
      * Check whether the bridge Node.js service itself is reachable via the
      * unauthenticated GET /health endpoint. Returns an array:
-     *   ['reachable' => bool, 'status' => string|null, 'latency_ms' => int|null]
+     *   ['reachable' => bool, 'status' => string|null, 'latency_ms' => int|null, 'url' => string|null]
+     *
+     * Pass $baseUrl to check a specific URL (e.g. from an unsaved form field)
+     * instead of reading the stored setting.
      */
-    public function checkBridgeHealth(): array
+    public function checkBridgeHealth(?string $baseUrl = null): array
     {
-        $config = $this->settings->getProviderConfig('bridge');
-
-        if (empty($config['api_base_url'])) {
-            return ['reachable' => false, 'status' => null, 'latency_ms' => null];
+        if ($baseUrl === null) {
+            $config  = $this->settings->getProviderConfig('bridge');
+            $baseUrl = $config['api_base_url'] ?? null;
         }
 
-        $url = rtrim((string) $config['api_base_url'], '/') . '/health';
+        if (empty($baseUrl)) {
+            return ['reachable' => false, 'status' => null, 'latency_ms' => null, 'url' => null];
+        }
+
+        $url = rtrim((string) $baseUrl, '/') . '/health';
 
         try {
             $start = microtime(true);
@@ -111,17 +117,18 @@ class WhatsappBridge implements WhatsappProviderInterface
                     'reachable'  => true,
                     'status'     => $body['status'] ?? 'ok',
                     'latency_ms' => $latency,
+                    'url'        => $url,
                 ];
             }
 
-            return ['reachable' => false, 'status' => null, 'latency_ms' => $latency];
+            return ['reachable' => false, 'status' => null, 'latency_ms' => $latency, 'url' => $url];
         } catch (\Throwable $e) {
             Log::channel($this->logChannel())->debug('WhatsApp bridge /health check failed', [
                 'url'     => $url,
                 'message' => $e->getMessage(),
             ]);
 
-            return ['reachable' => false, 'status' => null, 'latency_ms' => null];
+            return ['reachable' => false, 'status' => null, 'latency_ms' => null, 'url' => $url];
         }
     }
 

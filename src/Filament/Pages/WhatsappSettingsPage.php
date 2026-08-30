@@ -55,9 +55,9 @@ class WhatsappSettingsPage extends Page implements HasForms
 
     /**
      * Result of the last GET /health call to the bridge service.
-     * Shape: ['reachable' => bool, 'status' => string|null, 'latency_ms' => int|null]
+     * Shape: ['reachable' => bool, 'status' => string|null, 'latency_ms' => int|null, 'url' => string|null]
      */
-    public array $bridgeHealth = ['reachable' => false, 'status' => null, 'latency_ms' => null];
+    public array $bridgeHealth = ['reachable' => false, 'status' => null, 'latency_ms' => null, 'url' => null];
 
     public function mount(): void
     {
@@ -399,8 +399,12 @@ class WhatsappSettingsPage extends Page implements HasForms
 
     public function checkBridgeHealth(): void
     {
+        // Read the URL from the live form state so the check uses whatever
+        // the user has typed, even if they haven't saved yet.
+        $formUrl = data_get($this->data, 'providers.bridge.api_base_url');
+
         $bridge = app(WhatsappBridge::class);
-        $this->bridgeHealth = $bridge->checkBridgeHealth();
+        $this->bridgeHealth = $bridge->checkBridgeHealth($formUrl ?: null);
     }
 
     public function generateQr(): void
@@ -561,13 +565,19 @@ class WhatsappSettingsPage extends Page implements HasForms
 
     protected function renderBridgeHealthBadge(): HtmlString
     {
-        $reachable  = $this->bridgeHealth['reachable'] ?? false;
-        $latency    = $this->bridgeHealth['latency_ms'] ?? null;
+        $reachable     = $this->bridgeHealth['reachable'] ?? false;
+        $latency       = $this->bridgeHealth['latency_ms'] ?? null;
         $serviceStatus = $this->bridgeHealth['status'] ?? null;
+        $checkedUrl    = $this->bridgeHealth['url'] ?? null;
+
+        // Build the small URL hint shown below the badge.
+        $urlHint = $checkedUrl
+            ? '<p class="mt-1 text-xs text-gray-400 dark:text-gray-500 font-mono">' . e($checkedUrl) . '</p>'
+            : '';
 
         if ($reachable) {
-            $color = 'success';
-            $label = __('whatsapp-bridge-settings::messages.bridge.health_reachable');
+            $color  = 'success';
+            $label  = __('whatsapp-bridge-settings::messages.bridge.health_reachable');
             $detail = $latency !== null
                 ? '<span class="ml-2 text-xs text-gray-500 dark:text-gray-400">(' . e($latency) . ' ms)</span>'
                 : '';
@@ -575,11 +585,17 @@ class WhatsappSettingsPage extends Page implements HasForms
                 $detail .= ' <span class="text-xs text-gray-500 dark:text-gray-400">— ' . e($serviceStatus) . '</span>';
             }
         } else {
-            $config = app(WhatsappSettingsRepository::class)->getProviderConfig('bridge');
-            if (empty($config['api_base_url'])) {
+            // Determine whether a URL is even configured (from form or DB).
+            $formUrl = data_get($this->data, 'providers.bridge.api_base_url');
+            $hasUrl  = ! empty($formUrl) || ! empty($checkedUrl);
+
+            if (! $hasUrl) {
                 $color  = 'gray';
                 $label  = __('whatsapp-bridge-settings::messages.bridge.health_not_configured');
-                $detail = '';
+                $detail = '<span class="ml-2 text-xs text-gray-400">' .
+                    e(__('whatsapp-bridge-settings::messages.bridge.health_enter_url_hint')) .
+                    '</span>';
+                $urlHint = '';
             } else {
                 $color  = 'danger';
                 $label  = __('whatsapp-bridge-settings::messages.bridge.health_unreachable');
@@ -590,9 +606,12 @@ class WhatsappSettingsPage extends Page implements HasForms
         }
 
         return new HtmlString(
-            '<div class="flex items-center gap-2">' .
-                '<span class="fi-badge fi-color-' . $color . '">' . e($label) . '</span>' .
-                $detail .
+            '<div class="space-y-1">' .
+                '<div class="flex items-center gap-2">' .
+                    '<span class="fi-badge fi-color-' . $color . '">' . e($label) . '</span>' .
+                    $detail .
+                '</div>' .
+                $urlHint .
             '</div>'
         );
     }

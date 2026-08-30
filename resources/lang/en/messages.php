@@ -64,6 +64,7 @@ return [
         'health_reachable' => 'Service Online',
         'health_unreachable' => 'Service Unreachable',
         'health_not_configured' => 'Not Configured',
+        'health_enter_url_hint' => 'Enter the API Base URL above and click “Check Service”',
     ],
 
     'meta' => [
