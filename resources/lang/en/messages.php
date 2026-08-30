@@ -56,6 +56,14 @@ return [
         'sender' => 'Sender / Instance ID',
         'sender_placeholder' => 'Sender ID',
         'timeout' => 'Timeout (seconds)',
+        // Health check section
+        'health_title' => 'Bridge Service Status',
+        'health_description' => 'Checks the /health endpoint of the bridge service to confirm it is reachable before attempting to connect.',
+        'health_label' => 'Service Reachability',
+        'health_check_button' => 'Check Service',
+        'health_reachable' => 'Service Online',
+        'health_unreachable' => 'Service Unreachable',
+        'health_not_configured' => 'Not Configured',
     ],
 
     'meta' => [

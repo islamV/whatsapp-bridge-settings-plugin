@@ -23,6 +23,7 @@ use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
 use Islamv\WhatsappBridgeSettingsPlugin\Enums\WhatsappProvider;
+use Islamv\WhatsappBridgeSettingsPlugin\Services\WhatsappBridge;
 use Islamv\WhatsappBridgeSettingsPlugin\Settings\WhatsappSettingsRepository;
 
 /**
@@ -52,9 +53,16 @@ class WhatsappSettingsPage extends Page implements HasForms
 
     public bool $hasMetaAppSecret = false;
 
+    /**
+     * Result of the last GET /health call to the bridge service.
+     * Shape: ['reachable' => bool, 'status' => string|null, 'latency_ms' => int|null]
+     */
+    public array $bridgeHealth = ['reachable' => false, 'status' => null, 'latency_ms' => null];
+
     public function mount(): void
     {
         $this->fillForm();
+        $this->checkBridgeHealth();
         $this->checkStatus();
     }
 
@@ -121,6 +129,23 @@ class WhatsappSettingsPage extends Page implements HasForms
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.bridge'))
                             ->icon('heroicon-o-link')
                             ->schema([
+                                // ── Bridge Service Health ──────────────────────────────────────
+                                Section::make(__('whatsapp-bridge-settings::messages.bridge.health_title'))
+                                    ->description(__('whatsapp-bridge-settings::messages.bridge.health_description'))
+                                    ->schema([
+                                        Placeholder::make('bridge_health_status')
+                                            ->label(__('whatsapp-bridge-settings::messages.bridge.health_label'))
+                                            ->content(fn (): HtmlString => $this->renderBridgeHealthBadge()),
+                                        Actions::make([
+                                            Action::make('checkBridgeHealth')
+                                                ->label(__('whatsapp-bridge-settings::messages.bridge.health_check_button'))
+                                                ->icon('heroicon-o-signal')
+                                                ->color('gray')
+                                                ->outlined()
+                                                ->action('checkBridgeHealth'),
+                                        ]),
+                                    ]),
+                                // ── Bridge Connection Settings ─────────────────────────────────
                                 Section::make(__('whatsapp-bridge-settings::messages.bridge.card_title'))
                                     ->description(__('whatsapp-bridge-settings::messages.bridge.card_description'))
                                     ->columns(2)
@@ -322,6 +347,7 @@ class WhatsappSettingsPage extends Page implements HasForms
             ->send();
 
         $this->fillForm();
+        $this->checkBridgeHealth();
         $this->checkStatus();
     }
 
@@ -371,20 +397,30 @@ class WhatsappSettingsPage extends Page implements HasForms
         }
     }
 
+    public function checkBridgeHealth(): void
+    {
+        $bridge = app(WhatsappBridge::class);
+        $this->bridgeHealth = $bridge->checkBridgeHealth();
+    }
+
     public function generateQr(): void
     {
         $state = $this->form->getState();
         $config = $state['providers']['bridge'] ?? [];
 
+        // Persist the current form values so the QR request uses them.
         app(WhatsappSettingsRepository::class)->saveProvider('bridge', $config);
         $this->fillForm();
 
-        $whatsapp = app(WhatsappProviderInterface::class);
+        // Resolve a fresh WhatsappBridge instance (bypassing the singleton cache)
+        // so it picks up the settings we just saved.
+        /** @var WhatsappBridge $bridge */
+        $bridge = app()->make(WhatsappBridge::class);
 
-        $this->qrCode = $whatsapp->generateQrCode();
-        $this->status = $this->qrCode ? 'waiting' : $whatsapp->getConnectionStatus();
+        $this->qrCode = $bridge->generateQrCode();
+        $this->status = $this->qrCode ? 'waiting' : $bridge->getConnectionStatus();
         $this->connectedPhone = $this->status === 'connected'
-            ? $whatsapp->getConnectedPhone()
+            ? $bridge->getConnectedPhone()
             : null;
 
         if (! $this->qrCode && $this->status !== 'connected') {
@@ -519,6 +555,44 @@ class WhatsappSettingsPage extends Page implements HasForms
                 '<span class="fi-badge fi-color-' . $color . '">' . e($label) . '</span>' .
                 $phone .
                 $qr .
+            '</div>'
+        );
+    }
+
+    protected function renderBridgeHealthBadge(): HtmlString
+    {
+        $reachable  = $this->bridgeHealth['reachable'] ?? false;
+        $latency    = $this->bridgeHealth['latency_ms'] ?? null;
+        $serviceStatus = $this->bridgeHealth['status'] ?? null;
+
+        if ($reachable) {
+            $color = 'success';
+            $label = __('whatsapp-bridge-settings::messages.bridge.health_reachable');
+            $detail = $latency !== null
+                ? '<span class="ml-2 text-xs text-gray-500 dark:text-gray-400">(' . e($latency) . ' ms)</span>'
+                : '';
+            if ($serviceStatus && $serviceStatus !== 'ok') {
+                $detail .= ' <span class="text-xs text-gray-500 dark:text-gray-400">— ' . e($serviceStatus) . '</span>';
+            }
+        } else {
+            $config = app(WhatsappSettingsRepository::class)->getProviderConfig('bridge');
+            if (empty($config['api_base_url'])) {
+                $color  = 'gray';
+                $label  = __('whatsapp-bridge-settings::messages.bridge.health_not_configured');
+                $detail = '';
+            } else {
+                $color  = 'danger';
+                $label  = __('whatsapp-bridge-settings::messages.bridge.health_unreachable');
+                $detail = $latency !== null
+                    ? '<span class="ml-2 text-xs text-gray-500 dark:text-gray-400">(' . e($latency) . ' ms)</span>'
+                    : '';
+            }
+        }
+
+        return new HtmlString(
+            '<div class="flex items-center gap-2">' .
+                '<span class="fi-badge fi-color-' . $color . '">' . e($label) . '</span>' .
+                $detail .
             '</div>'
         );
     }
