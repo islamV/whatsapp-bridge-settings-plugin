@@ -5,6 +5,7 @@ return [
     'navigation_label' => 'WhatsApp',
     'page_title' => 'WhatsApp Settings',
     'page_heading' => 'WhatsApp Settings',
+    'page_subheading' => 'Configure providers, connections, and messaging settings.',
 
     'tabs' => [
         'general' => 'General',
@@ -65,6 +66,25 @@ return [
         'health_unreachable' => 'Service Unreachable',
         'health_not_configured' => 'Not Configured',
         'health_enter_url_hint' => 'Enter the API Base URL above and click “Check Service”',
+        // Overview Card
+        'overview_title' => 'Connection Overview',
+        'overview_description' => 'Real-time status of your bridge service and WhatsApp session.',
+        'live_badge' => 'Live',
+        'bridge_api_title' => 'Bridge API',
+        'whatsapp_title' => 'WhatsApp Session',
+        'instance_title' => 'Instance',
+        'active_instance' => 'Active instance',
+        'no_instance' => '—',
+        'active_session' => 'Active session',
+        'no_session' => 'No active session',
+        'scan_qr_hint' => 'Scan QR code to connect',
+        'latency_label' => ':ms ms latency',
+        'save_changes' => 'Save Changes',
+        'request_timeout' => 'Request Timeout',
+        'timeout_suffix' => 'seconds',
+        'bridge_unreachable_title' => 'Bridge Service Unreachable',
+        'bridge_unreachable_body' => 'Make sure the bridge Node.js service is running and accessible at the configured URL.',
+        'send_test_disabled_tooltip' => 'Connect WhatsApp before sending a test message.',
     ],
 
     'meta' => [
