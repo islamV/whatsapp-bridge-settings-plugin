@@ -399,9 +399,15 @@ class WhatsappSettingsPage extends Page implements HasForms
 
     public function checkBridgeHealth(): void
     {
-        // Read the URL from the live form state so the check uses whatever
-        // the user has typed, even if they haven't saved yet.
+        // Prefer the live form value (unsaved edits), but fall back to the
+        // persisted setting so the initial page-load check always works even
+        // before Livewire syncs $this->data.
         $formUrl = data_get($this->data, 'providers.bridge.api_base_url');
+
+        if (empty($formUrl)) {
+            $settings = app(WhatsappSettingsRepository::class)->all();
+            $formUrl  = $settings['providers']['bridge']['api_base_url'] ?? null;
+        }
 
         $bridge = app(WhatsappBridge::class);
         $this->bridgeHealth = $bridge->checkBridgeHealth($formUrl ?: null);
@@ -570,48 +576,50 @@ class WhatsappSettingsPage extends Page implements HasForms
         $serviceStatus = $this->bridgeHealth['status'] ?? null;
         $checkedUrl    = $this->bridgeHealth['url'] ?? null;
 
-        // Build the small URL hint shown below the badge.
-        $urlHint = $checkedUrl
-            ? '<p class="mt-1 text-xs text-gray-400 dark:text-gray-500 font-mono">' . e($checkedUrl) . '</p>'
-            : '';
-
         if ($reachable) {
-            $color  = 'success';
-            $label  = __('whatsapp-bridge-settings::messages.bridge.health_reachable');
-            $detail = $latency !== null
-                ? '<span class="ml-2 text-xs text-gray-500 dark:text-gray-400">(' . e($latency) . ' ms)</span>'
+            $badgeClasses = 'inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:ring-green-400/20';
+            $dot          = '<span class="relative inline-flex h-2 w-2">' .
+                                '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>' .
+                                '<span class="relative inline-flex h-2 w-2 rounded-full bg-green-500 dark:bg-green-400"></span>' .
+                            '</span>';
+            $label        = __('whatsapp-bridge-settings::messages.bridge.health_reachable');
+            $detail       = $latency !== null
+                ? '<span class="text-xs text-gray-500 dark:text-gray-400">(' . e($latency) . ' ms)</span>'
                 : '';
             if ($serviceStatus && $serviceStatus !== 'ok') {
                 $detail .= ' <span class="text-xs text-gray-500 dark:text-gray-400">— ' . e($serviceStatus) . '</span>';
             }
         } else {
-            // Determine whether a URL is even configured (from form or DB).
             $formUrl = data_get($this->data, 'providers.bridge.api_base_url');
             $hasUrl  = ! empty($formUrl) || ! empty($checkedUrl);
 
             if (! $hasUrl) {
-                $color  = 'gray';
-                $label  = __('whatsapp-bridge-settings::messages.bridge.health_not_configured');
-                $detail = '<span class="ml-2 text-xs text-gray-400">' .
+                $badgeClasses = 'inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20';
+                $dot          = '<span class="inline-block h-1.5 w-1.5 rounded-full bg-gray-400 dark:bg-gray-500 animate-pulse"></span>';
+                $label        = __('whatsapp-bridge-settings::messages.bridge.health_not_configured');
+                $detail       = '<span class="text-xs text-gray-400">' .
                     e(__('whatsapp-bridge-settings::messages.bridge.health_enter_url_hint')) .
                     '</span>';
-                $urlHint = '';
             } else {
-                $color  = 'danger';
-                $label  = __('whatsapp-bridge-settings::messages.bridge.health_unreachable');
-                $detail = $latency !== null
-                    ? '<span class="ml-2 text-xs text-gray-500 dark:text-gray-400">(' . e($latency) . ' ms)</span>'
+                $badgeClasses = 'inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-400/10 dark:text-red-400 dark:ring-red-400/20';
+                $dot          = '<span class="relative inline-flex h-2 w-2">' .
+                                    '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>' .
+                                    '<span class="relative inline-flex h-2 w-2 rounded-full bg-red-500 dark:bg-red-400"></span>' .
+                                '</span>';
+                $label        = __('whatsapp-bridge-settings::messages.bridge.health_unreachable');
+                $detail       = $latency !== null
+                    ? '<span class="text-xs text-gray-500 dark:text-gray-400">(' . e($latency) . ' ms)</span>'
                     : '';
             }
         }
 
         return new HtmlString(
-            '<div class="space-y-1">' .
-                '<div class="flex items-center gap-2">' .
-                    '<span class="fi-badge fi-color-' . $color . '">' . e($label) . '</span>' .
-                    $detail .
-                '</div>' .
-                $urlHint .
+            '<div class="flex items-center gap-2">' .
+                '<span class="' . $badgeClasses . '">' .
+                    $dot .
+                    e($label) .
+                '</span>' .
+                $detail .
             '</div>'
         );
     }
