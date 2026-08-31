@@ -2,6 +2,7 @@
 
 namespace Islamv\WhatsappBridgeSettingsPlugin;
 
+use Islamv\WhatsappBridgeSettingsPlugin\Console\InstallTailwindSourcesCommand;
 use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
 use Islamv\WhatsappBridgeSettingsPlugin\Services\MetaWhatsapp;
 use Islamv\WhatsappBridgeSettingsPlugin\Services\TwilioWhatsapp;
@@ -21,7 +22,10 @@ class WhatsappBridgeSettingsPluginServiceProvider extends PackageServiceProvider
             ->hasConfigFile('whatsapp-bridge-settings')
             ->hasMigration('create_whatsapp_bridge_settings_table')
             ->hasViews()
-            ->hasTranslations();
+            ->hasTranslations()
+            ->hasCommands([
+                InstallTailwindSourcesCommand::class,
+            ]);
     }
 
     public function packageRegistered(): void

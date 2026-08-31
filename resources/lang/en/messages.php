@@ -145,8 +145,10 @@ return [
     ],
 
     'test_form' => [
+        'country_code' => 'Country Code',
         'phone' => 'Test Phone Number',
-        'phone_placeholder' => '201000000000',
+        'phone_placeholder' => '1000000000',
+        'template' => 'Message Template',
         'message' => 'Test Message',
         'message_placeholder' => 'Hello from WhatsApp Bridge!',
     ],

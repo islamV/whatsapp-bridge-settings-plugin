@@ -144,7 +144,8 @@ class WhatsappBridgeTest extends TestCase
 
         $this->assertTrue($result);
         $this->assertNotNull($calledWith);
-        $this->assertStringContainsString('Your code is: 987654', $calledWith['text']);
+        $msg = $calledWith['message'] ?? $calledWith['text'] ?? '';
+        $this->assertStringContainsString('Your code is: 987654', $msg);
     }
 
     public function test_send_otp_returns_false_when_otp_disabled(): void

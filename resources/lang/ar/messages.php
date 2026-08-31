@@ -145,8 +145,10 @@ return [
     ],
 
     'test_form' => [
+        'country_code' => 'رمز الدولة',
         'phone' => 'رقم هاتف الاختبار',
-        'phone_placeholder' => '201000000000',
+        'phone_placeholder' => '1000000000',
+        'template' => 'قالب الرسالة',
         'message' => 'رسالة الاختبار',
         'message_placeholder' => 'مرحباً من جسر واتساب!',
     ],
@@ -164,8 +166,8 @@ return [
         'qr_expires_in' => 'ينتهي صلاحية رمز QR خلال :count ثانية',
         'qr_generating' => 'جاري إنشاء رمز QR...',
         'disconnect' => 'قطع الاتصال',
-        'connected_title' => 'تم الاتصال بواتساب',
-        'connected_phone' => 'متصل بـ: :phone',
+        'connected_title' => 'تم الاتصال بواتساب بنجاح!',
+        'connected_phone' => 'الحساب المتصل: :phone',
         'disconnect_button' => 'قطع الاتصال',
         'test_section_title' => 'إرسال رسالة اختبار',
         'test_phone_label' => 'رقم الهاتف',

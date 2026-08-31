@@ -57,7 +57,46 @@ public function panel(Panel $panel): Panel
 }
 ```
 
-### 6. Configure WhatsApp credentials
+### 6. Add Tailwind CSS v4 source paths
+
+> **Required if your project uses Tailwind CSS v4** (`@import 'tailwindcss'` in your CSS entry point).
+>
+> Tailwind v4 only generates CSS for classes it finds in scanned files. Without these entries, all utility classes used by the plugin's views and PHP files will be **purged**, leaving the settings page completely unstyled.
+
+Run the bundled artisan command to automatically inject the required `@source` directives:
+
+```bash
+php artisan whatsapp-bridge-settings:install-tailwind
+```
+
+Then rebuild your CSS:
+
+```bash
+npm run build
+```
+
+The command appends the following lines to `resources/css/app.css` (default):
+
+```css
+@source '../../vendor/islamv/whatsapp-bridge-settings-plugin/resources/views/**/*.blade.php';
+@source '../../vendor/islamv/whatsapp-bridge-settings-plugin/src/**/*.php';
+```
+
+**Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--css=path` | `resources/css/app.css` | Path to your Tailwind CSS entry file |
+| `--force` | — | Re-inject even if lines are already present |
+
+```bash
+# Custom CSS file path
+php artisan whatsapp-bridge-settings:install-tailwind --css=resources/css/panel.css
+```
+
+> The command is idempotent — running it multiple times will not add duplicate lines.
+
+### 7. Configure WhatsApp credentials
 
 Open the **WhatsApp Settings** page in your Filament admin panel and configure your preferred provider. If you are using the local sibling service `whatsapp-bridge`, the Bridge provider defaults to `http://127.0.0.1:3000`.
 
