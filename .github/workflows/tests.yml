@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
 
 jobs:
   test:
@@ -12,20 +12,20 @@ jobs:
 
     strategy:
       matrix:
-        php: [8.3, 8.4, 8.5]
-        laravel: [11, 12, 13]
-        stability: [prefer-stable]
+        php: ['8.3', '8.4', '8.5']
+        laravel: ['11', '12', '13']
         exclude:
-          - php: 8.3
-            laravel: 13
+          - php: '8.3'
+            laravel: '13'
 
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@c665c7a15b529232105a825c9111db605008d981 # v2.32.0
         with:
           php-version: ${{ matrix.php }}
           extensions: mbstring, pdo_sqlite
