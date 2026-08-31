@@ -30,8 +30,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require "laravel/framework:^${{ matrix.laravel }}.0" --no-interaction --no-progress
-          composer install --no-interaction --no-progress
+          composer require "laravel/framework:^${{ matrix.laravel }}.0" --no-interaction --no-progress --no-update
+          composer update --prefer-dist --no-interaction --no-progress
 
       - name: Run test suite
-        run: vendor/bin/phpunit
+        run: php vendor/bin/phpunit
