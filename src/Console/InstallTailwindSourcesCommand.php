@@ -3,73 +3,138 @@
 namespace Islamv\WhatsappBridgeSettingsPlugin\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 
 class InstallTailwindSourcesCommand extends Command
 {
     protected $signature = 'whatsapp-bridge-settings:install-tailwind
-                            {--css=resources/css/app.css : Path to your Tailwind CSS entry file}
-                            {--force : Overwrite existing @source lines if already present}';
+                            {--css=resources/css/app.css : Fallback CSS file when no Filament theme is found}
+                            {--force : Re-inject even if the @source lines are already present}';
 
-    protected $description = 'Append the required Tailwind CSS v4 @source directives for the WhatsApp Bridge Settings plugin';
+    protected $description = 'Inject the required Tailwind CSS v4 @source directives for the WhatsApp Bridge Settings plugin';
 
-    /** Lines to inject */
-    private const SOURCES = [
+    // Relative to resources/css/app.css (2 levels up = project root)
+    private const SOURCES_APP = [
         "@source '../../vendor/islamv/whatsapp-bridge-settings-plugin/resources/views/**/*.blade.php';",
         "@source '../../vendor/islamv/whatsapp-bridge-settings-plugin/src/**/*.php';",
     ];
 
+    // Relative to resources/css/filament/{panel}/theme.css (4 levels up = project root)
+    private const SOURCES_THEME = [
+        "@source '../../../../vendor/islamv/whatsapp-bridge-settings-plugin/resources/views/**/*.blade.php';",
+        "@source '../../../../vendor/islamv/whatsapp-bridge-settings-plugin/src/**/*.php';",
+    ];
+
     public function handle(): int
     {
-        $cssPath = base_path($this->option('css'));
+        $themes = $this->detectFilamentThemes();
 
-        if (! file_exists($cssPath)) {
-            $this->error("CSS file not found: {$cssPath}");
+        if ($themes->isNotEmpty()) {
+            return $this->injectIntoThemes($themes);
+        }
+
+        // No Filament theme found — fall back to the generic CSS file
+        $this->line('  <comment>No Filament panel themes found. Falling back to: ' . $this->option('css') . '</comment>');
+        $this->newLine();
+
+        return $this->injectIntoFile(
+            base_path($this->option('css')),
+            $this->option('css'),
+            self::SOURCES_APP
+        );
+    }
+
+    // ── Theme detection ───────────────────────────────────────────────────────
+
+    /**
+     * Discover all resources/css/filament/{panel}/theme.css files.
+     *
+     * @return Collection<int, array{path: string, label: string}>
+     */
+    private function detectFilamentThemes(): Collection
+    {
+        $dir = resource_path('css/filament');
+
+        if (! is_dir($dir)) {
+            return collect();
+        }
+
+        return collect(glob("{$dir}/*/theme.css") ?: [])
+            ->map(function (string $path) use ($dir): array {
+                $panel = basename(dirname($path));
+                $label = "resources/css/filament/{$panel}/theme.css";
+
+                return compact('path', 'label');
+            });
+    }
+
+    // ── Injection helpers ─────────────────────────────────────────────────────
+
+    private function injectIntoThemes(Collection $themes): int
+    {
+        $overall = self::SUCCESS;
+
+        foreach ($themes as ['path' => $path, 'label' => $label]) {
+            $result = $this->injectIntoFile($path, $label, self::SOURCES_THEME);
+
+            if ($result === self::FAILURE) {
+                $overall = self::FAILURE;
+            }
+        }
+
+        return $overall;
+    }
+
+    /**
+     * @param  string[]  $sources
+     */
+    private function injectIntoFile(string $absolutePath, string $displayLabel, array $sources): int
+    {
+        if (! file_exists($absolutePath)) {
+            $this->error("File not found: {$absolutePath}");
             $this->line('  Pass the correct path with <comment>--css=path/to/app.css</comment>');
 
             return self::FAILURE;
         }
 
-        $contents = file_get_contents($cssPath);
+        $contents = file_get_contents($absolutePath);
 
         // ── Already present check ─────────────────────────────────────────────
-        $alreadyPresent = collect(self::SOURCES)
+        $alreadyPresent = collect($sources)
             ->every(fn (string $line) => str_contains($contents, $line));
 
         if ($alreadyPresent && ! $this->option('force')) {
-            $this->info('✓ Tailwind @source directives are already present in: ' . $this->option('css'));
+            $this->info("✓ @source directives already present in: {$displayLabel}");
 
             return self::SUCCESS;
         }
 
-        // ── Filter out lines that are already in the file ─────────────────────
-        $toAdd = collect(self::SOURCES)
+        // ── Only add missing lines ────────────────────────────────────────────
+        $toAdd = collect($sources)
             ->reject(fn (string $line) => str_contains($contents, $line))
             ->values();
 
         if ($toAdd->isEmpty()) {
-            $this->info('✓ All @source directives are already present.');
+            $this->info("✓ All @source directives already present in: {$displayLabel}");
 
             return self::SUCCESS;
         }
 
-        // ── Build the block to append ─────────────────────────────────────────
+        // ── Smart insertion: after last existing @source, else append ─────────
         $block = "\n" . $toAdd->join("\n") . "\n";
 
-        // Insert after the last existing @source line if any exist, otherwise append.
-        if (preg_match('/(^@source [^\n]+\n)/m', $contents)) {
-            // Find the position right after the last @source line
+        if (preg_match('/^@source [^\n]+\n/m', $contents)) {
             preg_match_all('/^@source [^\n]+\n/m', $contents, $matches, PREG_OFFSET_CAPTURE);
-            $lastMatch  = end($matches[0]);
-            $insertAt   = $lastMatch[1] + strlen($lastMatch[0]);
+            $lastMatch   = end($matches[0]);
+            $insertAt    = $lastMatch[1] + strlen($lastMatch[0]);
             $newContents = substr($contents, 0, $insertAt) . $block . substr($contents, $insertAt);
         } else {
-            // No existing @source lines — append at end
             $newContents = rtrim($contents) . "\n" . $block;
         }
 
-        file_put_contents($cssPath, $newContents);
+        file_put_contents($absolutePath, $newContents);
 
-        $this->info('✓ Added Tailwind @source directives to: ' . $this->option('css'));
+        $this->info("✓ Added @source directives to: {$displayLabel}");
         $this->newLine();
 
         foreach ($toAdd as $line) {
