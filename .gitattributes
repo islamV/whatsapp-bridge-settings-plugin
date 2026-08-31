@@ -1,0 +1,12 @@
+* text=auto eol=lf
+
+# Exclude dev, test, CI, and documentation files from released package dist archive
+/.github                export-ignore
+/tests                  export-ignore
+/docs                   export-ignore
+/phpunit.xml            export-ignore
+/composer.lock          export-ignore
+/.antigravityignore     export-ignore
+/.editorconfig          export-ignore
+/.gitattributes         export-ignore
+/SECURITY.md            export-ignore

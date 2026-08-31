@@ -3,6 +3,8 @@
 [![Tests](https://github.com/islamV/whatsapp-bridge-settings-plugin/actions/workflows/tests.yml/badge.svg)](https://github.com/islamV/whatsapp-bridge-settings-plugin/actions/workflows/tests.yml)
 [![Latest Version](https://img.shields.io/packagist/v/islamv/whatsapp-bridge-settings-plugin.svg)](https://packagist.org/packages/islamv/whatsapp-bridge-settings-plugin)
 [![License](https://img.shields.io/github/license/islamV/whatsapp-bridge-settings-plugin.svg)](https://github.com/islamV/whatsapp-bridge-settings-plugin/blob/main/LICENSE)
+[![Plumb score](https://plumbphp.dev/badges/islamv/whatsapp-bridge-settings-plugin/composite.svg)](https://plumbphp.dev/islamv/whatsapp-bridge-settings-plugin)
+[![Security](https://plumbphp.dev/badges/islamv/whatsapp-bridge-settings-plugin/security.svg)](https://plumbphp.dev/islamv/whatsapp-bridge-settings-plugin)
 
 A reusable WhatsApp bridge and settings plugin for Laravel 13+ and Filament 5. Supports multiple providers: **Bridge**, **Meta WhatsApp Cloud API**, and **Twilio WhatsApp**.
 
@@ -14,8 +16,23 @@ A reusable WhatsApp bridge and settings plugin for Laravel 13+ and Filament 5. S
 - **Connection status** - Real-time connection monitoring with polling
 - **Test messaging** - Send test messages from the settings page
 - **Encrypted tokens** - API tokens encrypted at rest in the database
-- **OTP support** - Built-in OTP message templating
+- **OTP support** - Built-in OTP message templating with custom variables & live preview
 - **Bilingual** - Full English and Arabic translations
+
+## Screenshots
+
+### General Settings & OTP Template Editor
+![General Settings](docs/images/general_settings.png)
+
+### WhatsApp Bridge Connection Overview
+![Bridge Connection](docs/images/bridge_settings.png)
+
+### Meta WhatsApp Cloud API Configuration
+![Meta Configuration](docs/images/meta_settings.png)
+
+### Send Test Message & Live Preview Modal
+![Send Test Message Modal](docs/images/test_message_modal.png)
+
 
 ## Installation
 

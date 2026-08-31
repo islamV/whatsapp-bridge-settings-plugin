@@ -2,31 +2,20 @@
 
 ## Supported Versions
 
+The following versions of `whatsapp-bridge-settings-plugin` are currently supported with security updates:
+
 | Version | Supported          |
 | ------- | ------------------ |
 | 1.x     | :white_check_mark: |
+| < 1.0   | :x:                |
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability, please do NOT open a public issue.
-
-Instead, send a private report to the repository maintainer or open a security advisory at:
-
-https://github.com/islamV/whatsapp-bridge-settings-plugin/security/advisories
+If you discover a security vulnerability within `whatsapp-bridge-settings-plugin`, please report it responsibly by emailing the maintainer or opening a private security advisory on GitHub.
 
 Please include:
+- A description of the vulnerability and its potential impact.
+- Steps or code snippets to reproduce the issue.
+- Any suggested fixes or mitigations if available.
 
-- Description of the vulnerability
-- Steps to reproduce
-- Possible impact
-- Suggested fix (if any)
-
-You will receive a response within 48 hours. We appreciate your responsible disclosure.
-
-## Security Measures
-
-- API tokens are encrypted at rest using Laravel's Crypt facade
-- Full tokens are never displayed in the UI after saving
-- Error messages never expose credentials or tokens
-- Phone numbers are masked in logs
-- All external HTTP requests use configurable timeouts
+All security vulnerabilities will be acknowledged within 48 hours and promptly addressed.
