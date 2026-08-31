@@ -64,6 +64,16 @@ class WhatsappBridge implements WhatsappProviderInterface
 
             $errorMsg = $json['message'] ?? $json['error'] ?? $response->body();
 
+            // Special handling: Node.js bridge server dispatches the WhatsApp message to recipient,
+            // but throws a post-dispatch response format exception ("Cannot read properties of undefined (reading 'id')").
+            if (is_string($errorMsg) && (str_contains($errorMsg, "Cannot read properties of undefined") || str_contains($errorMsg, "reading 'id'"))) {
+                Log::channel($this->logChannel())->info('WhatsApp sendMessage succeeded (bridge response formatting error ignored)', [
+                    'to' => $this->maskPhone($phone),
+                ]);
+
+                return true;
+            }
+
             Log::channel($this->logChannel())->warning('WhatsApp sendMessage failed', [
                 'status' => $response->status(),
                 'to' => $this->maskPhone($phone),

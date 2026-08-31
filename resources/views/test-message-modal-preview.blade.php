@@ -1,5 +1,16 @@
+@php
+    $initCc = $get('country_code') ?? '20';
+    $initPhone = $get('test_phone') ?? '';
+    $initMessage = $get('test_message') ?? '';
+@endphp
+
 <div
-    x-data="testMessageModalPreview({ appName: @js(config('app.name', 'WhatsApp Bridge')) })"
+    x-data="testMessageModalPreview({
+        appName: @js(config('app.name', 'WhatsApp Bridge')),
+        countryCode: @js($initCc),
+        phone: @js($initPhone),
+        message: @js($initMessage)
+    })"
     class="w-full mt-2"
 >
     {{-- WhatsApp Live Preview Header --}}
@@ -78,43 +89,61 @@
 (function() {
     function registerComponent() {
         if (typeof Alpine === 'undefined') return;
-        if (Alpine.data && Alpine.data('testMessageModalPreview')) return;
 
         Alpine.data('testMessageModalPreview', (config) => ({
-            phone: '',
-            countryCode: '20',
-            message: '',
+            phone: config?.phone || '',
+            countryCode: config?.countryCode || '20',
+            message: config?.message || '',
             appName: config?.appName || 'WhatsApp Bridge',
             currentTime: '',
+            syncInterval: null,
+
             init() {
                 this.updateTime();
                 setInterval(() => this.updateTime(), 30000);
 
+                if (config?.phone) this.phone = config.phone;
+                if (config?.countryCode) this.countryCode = config.countryCode;
+                if (config?.message) this.message = config.message;
+
                 const sync = () => {
+                    // 1. Check Livewire component state
                     try {
-                        const actionData = this.$wire?.mountedPageActionData || (this.$wire?.mountedActionsData ? this.$wire.mountedActionsData[0] : null);
-                        if (actionData) {
-                            if (actionData.test_phone !== undefined && actionData.test_phone !== null) this.phone = actionData.test_phone;
-                            if (actionData.country_code !== undefined && actionData.country_code !== null) this.countryCode = actionData.country_code;
-                            if (actionData.test_message !== undefined && actionData.test_message !== null) this.message = actionData.test_message;
+                        const wire = this.$wire;
+                        if (wire) {
+                            const actionData = wire.mountedPageActionData
+                                || wire.mountedActionData
+                                || (wire.mountedActionsData ? wire.mountedActionsData[0] : null)
+                                || wire.mountedTableActionData
+                                || wire.data;
+
+                            if (actionData) {
+                                if (actionData.test_message) this.message = String(actionData.test_message);
+                                if (actionData.country_code) this.countryCode = String(actionData.country_code);
+                                if (actionData.test_phone) this.phone = String(actionData.test_phone);
+                            }
                         }
                     } catch (_) {}
 
+                    // 2. Inspect DOM elements directly in modal
                     const modal = this.$el.closest('.fi-modal-window, .fi-modal, form, [role="dialog"]') || document.body;
 
-                    const phoneInput = modal.querySelector('input[name*="test_phone"], input[id*="test_phone"]');
-                    if (phoneInput && phoneInput.value !== undefined) {
-                        this.phone = phoneInput.value;
+                    // Message textarea
+                    const textarea = modal.querySelector('textarea');
+                    if (textarea && textarea.value !== undefined && textarea.value.trim().length > 0) {
+                        this.message = textarea.value;
                     }
 
-                    const ccSelect = modal.querySelector('select[name*="country_code"], select[id*="country_code"]');
-                    if (ccSelect && ccSelect.value !== undefined) {
-                        this.countryCode = ccSelect.value;
+                    // Phone input
+                    const phoneEl = modal.querySelector('input[type="tel"], input[placeholder*="1000000000"], input[name*="test_phone"], input[id*="test_phone"]');
+                    if (phoneEl && phoneEl.value !== undefined && phoneEl.value.trim().length > 0) {
+                        this.phone = phoneEl.value;
                     }
 
-                    const msgTextarea = modal.querySelector('textarea[name*="test_message"], textarea[id*="test_message"]');
-                    if (msgTextarea && msgTextarea.value !== undefined) {
-                        this.message = msgTextarea.value;
+                    // Country code
+                    const ccEl = modal.querySelector('select[name*="country_code"], select[id*="country_code"]');
+                    if (ccEl && ccEl.value) {
+                        this.countryCode = ccEl.value;
                     }
                 };
 
@@ -123,16 +152,22 @@
                 modalEl.addEventListener('change', sync);
                 modalEl.addEventListener('keyup', sync);
 
+                // Polling sync every 150ms to guarantee live update on template dropdown change & typing
+                this.syncInterval = setInterval(sync, 150);
+
                 sync();
                 this.$nextTick(sync);
-                setTimeout(sync, 100);
-                setTimeout(sync, 300);
-                setTimeout(sync, 800);
             },
+
+            destroy() {
+                if (this.syncInterval) clearInterval(this.syncInterval);
+            },
+
             updateTime() {
                 const now = new Date();
                 this.currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
             },
+
             formatFullPhone() {
                 const cc = (this.countryCode || '20').replace(/[^0-9]/g, '');
                 let rawPhone = (this.phone || '').replace(/[^0-9]/g, '');
@@ -149,6 +184,7 @@
 
                 return '+' + cc + ' ' + rawPhone;
             },
+
             renderMessageHtml(text) {
                 if (!text) return '';
                 let escaped = String(text)
