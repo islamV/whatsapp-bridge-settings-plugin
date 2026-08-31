@@ -4,6 +4,7 @@ namespace Islamv\WhatsappBridgeSettingsPlugin\Filament\Pages;
 
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
@@ -16,6 +17,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -292,23 +294,110 @@ class WhatsappSettingsPage extends Page implements HasForms
                 ->color('success')
                 ->disabled(fn (): bool => $this->status !== 'connected')
                 ->tooltip(fn (): ?string => $this->status !== 'connected' ? __('whatsapp-bridge-settings::messages.bridge.send_test_disabled_tooltip') : null)
+                ->modalHeading(__('whatsapp-bridge-settings::messages.actions.send_test'))
+                ->modalWidth('lg')
                 ->form([
-                    TextInput::make('test_phone')
-                        ->label(__('whatsapp-bridge-settings::messages.test_form.phone'))
-                        ->placeholder(__('whatsapp-bridge-settings::messages.test_form.phone_placeholder'))
-                        ->required()
-                        ->maxLength(20),
+                    Grid::make(12)->schema([
+                        Select::make('country_code')
+                            ->label(__('whatsapp-bridge-settings::messages.test_form.country_code'))
+                            ->options([
+                                '20' => '🇪🇬 Egypt (+20)',
+                                '966' => '🇸🇦 Saudi Arabia (+966)',
+                                '971' => '🇦🇪 UAE (+971)',
+                                '965' => '🇰🇼 Kuwait (+965)',
+                                '974' => '🇶🇦 Qatar (+974)',
+                                '968' => '🇴🇲 Oman (+968)',
+                                '973' => '🇧🇭 Bahrain (+973)',
+                                '962' => '🇯🇴 Jordan (+962)',
+                                '961' => '🇱🇧 Lebanon (+961)',
+                                '212' => '🇲🇦 Morocco (+212)',
+                                '216' => '🇹🇳 Tunisia (+216)',
+                                '213' => '🇩🇿 Algeria (+213)',
+                                '964' => '🇮🇶 Iraq (+964)',
+                                '963' => '🇸🇾 Syria (+963)',
+                                '967' => '🇾🇪 Yemen (+967)',
+                                '249' => '🇸🇩 Sudan (+249)',
+                                '218' => '🇱🇾 Libya (+218)',
+                                '1'   => '🇺🇸 USA/Canada (+1)',
+                                '44'  => '🇬🇧 UK (+44)',
+                                '49'  => '🇩🇪 Germany (+49)',
+                                '33'  => '🇫🇷 France (+33)',
+                                '90'  => '🇹🇷 Turkey (+90)',
+                                '91'  => '🇮🇳 India (+91)',
+                                '62'  => '🇮🇩 Indonesia (+62)',
+                                '92'  => '🇵🇰 Pakistan (+92)',
+                            ])
+                            ->default('20')
+                            ->searchable()
+                            ->required()
+                            ->live()
+                            ->columnSpan(5),
+
+                        TextInput::make('test_phone')
+                            ->label(__('whatsapp-bridge-settings::messages.test_form.phone'))
+                            ->placeholder('1000000000')
+                            ->required()
+                            ->tel()
+                            ->live(debounce: 300)
+                            ->maxLength(20)
+                            ->columnSpan(7),
+                    ]),
+
+                    Select::make('template_preset')
+                        ->label(__('whatsapp-bridge-settings::messages.test_form.template'))
+                        ->options([
+                            'custom' => '💬 Custom Text',
+                            'otp' => '🔒 OTP Verification Code',
+                            'order' => '📦 Order Confirmation',
+                            'welcome' => '👋 Welcome Message',
+                        ])
+                        ->default('custom')
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            $otpTemplate = app(WhatsappSettingsRepository::class)->get('otp_template', 'Your verification code is: {otp}');
+                            $otpSample = str_replace('{otp}', '482731', $otpTemplate);
+
+                            $presets = [
+                                'otp' => $otpSample,
+                                'order' => 'Hello! Your order #10492 has been confirmed and is being prepared.',
+                                'welcome' => 'Welcome to ' . config('app.name', 'our system') . '! Thank you for connecting with us on WhatsApp.',
+                            ];
+
+                            if (isset($presets[$state])) {
+                                $set('test_message', $presets[$state]);
+                            }
+                        }),
+
                     Textarea::make('test_message')
                         ->label(__('whatsapp-bridge-settings::messages.test_form.message'))
                         ->placeholder(__('whatsapp-bridge-settings::messages.test_form.message_placeholder'))
                         ->required()
+                        ->live(debounce: 300)
+                        ->rows(3)
                         ->maxLength(1000),
+
+                    ViewField::make('whatsapp_preview')
+                        ->view('whatsapp-bridge-settings::test-message-modal-preview')
+                        ->columnSpanFull(),
                 ])
                 ->action(function (array $data): void {
                     $whatsapp = app(WhatsappProviderInterface::class);
 
+                    $cc = preg_replace('/[^0-9]/', '', $data['country_code'] ?? '20');
+                    $rawPhone = preg_replace('/[^0-9]/', '', $data['test_phone'] ?? '');
+
+                    if (str_starts_with($rawPhone, '0')) {
+                        $rawPhone = substr($rawPhone, 1);
+                    }
+
+                    if (str_starts_with($rawPhone, $cc)) {
+                        $fullPhone = $rawPhone;
+                    } else {
+                        $fullPhone = $cc . $rawPhone;
+                    }
+
                     $success = $whatsapp->sendMessage(
-                        $data['test_phone'],
+                        $fullPhone,
                         $data['test_message']
                     );
 
@@ -390,6 +479,7 @@ class WhatsappSettingsPage extends Page implements HasForms
     {
         $whatsapp = app(WhatsappProviderInterface::class);
 
+        $previousStatus = $this->status;
         $this->status = $whatsapp->getConnectionStatus();
         $this->connectedPhone = $this->status === 'connected'
             ? $whatsapp->getConnectedPhone()
@@ -397,6 +487,14 @@ class WhatsappSettingsPage extends Page implements HasForms
 
         if ($this->status !== 'waiting') {
             $this->qrCode = null;
+        }
+
+        if ($previousStatus === 'waiting' && $this->status === 'connected') {
+            Notification::make()
+                ->title(__('whatsapp-bridge-settings::messages.qr.connected_title'))
+                ->body(__('whatsapp-bridge-settings::messages.qr.connected_phone', ['phone' => $this->connectedPhone ?? '']))
+                ->success()
+                ->send();
         }
     }
 
@@ -645,9 +743,9 @@ class WhatsappSettingsPage extends Page implements HasForms
             }
 
             $qrSection =
-                '<div class="mt-4 p-5 bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-500/30 shadow-xs text-center flex flex-col items-center justify-center">' .
+                '<div wire:poll.2s="checkStatus" class="mt-4 p-5 bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-500/30 shadow-xs text-center flex flex-col items-center justify-center">' .
                     '<h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">' . e(__('whatsapp-bridge-settings::messages.qr.qr_scan_title')) . '</h4>' .
-                    '<p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-4">Open WhatsApp > Linked Devices > Link a Device</p>' .
+                    '<p class="text-xs text-amber-600 dark:text-amber-400 mt-1 mb-4 flex items-center justify-center gap-1.5 font-medium"><span class="inline-block h-2 w-2 rounded-full bg-amber-500 animate-ping"></span> ' . e(__('whatsapp-bridge-settings::messages.status.waiting')) . '… Open WhatsApp > Linked Devices > Link a Device</p>' .
                     $qrContent .
                 '</div>';
         }
