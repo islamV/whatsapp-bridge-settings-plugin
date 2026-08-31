@@ -300,32 +300,33 @@ class WhatsappSettingsPage extends Page implements HasForms
                     Grid::make(12)->schema([
                         Select::make('country_code')
                             ->label(__('whatsapp-bridge-settings::messages.test_form.country_code'))
+                            ->prefixIcon('heroicon-o-globe-alt')
                             ->options([
-                                '20' => '🇪🇬 Egypt (+20)',
-                                '966' => '🇸🇦 Saudi Arabia (+966)',
-                                '971' => '🇦🇪 UAE (+971)',
-                                '965' => '🇰🇼 Kuwait (+965)',
-                                '974' => '🇶🇦 Qatar (+974)',
-                                '968' => '🇴🇲 Oman (+968)',
-                                '973' => '🇧🇭 Bahrain (+973)',
-                                '962' => '🇯🇴 Jordan (+962)',
-                                '961' => '🇱🇧 Lebanon (+961)',
-                                '212' => '🇲🇦 Morocco (+212)',
-                                '216' => '🇹🇳 Tunisia (+216)',
-                                '213' => '🇩🇿 Algeria (+213)',
-                                '964' => '🇮🇶 Iraq (+964)',
-                                '963' => '🇸🇾 Syria (+963)',
-                                '967' => '🇾🇪 Yemen (+967)',
-                                '249' => '🇸🇩 Sudan (+249)',
-                                '218' => '🇱🇾 Libya (+218)',
-                                '1'   => '🇺🇸 USA/Canada (+1)',
-                                '44'  => '🇬🇧 UK (+44)',
-                                '49'  => '🇩🇪 Germany (+49)',
-                                '33'  => '🇫🇷 France (+33)',
-                                '90'  => '🇹🇷 Turkey (+90)',
-                                '91'  => '🇮🇳 India (+91)',
-                                '62'  => '🇮🇩 Indonesia (+62)',
-                                '92'  => '🇵🇰 Pakistan (+92)',
+                                '20' => 'Egypt (+20)',
+                                '966' => 'Saudi Arabia (+966)',
+                                '971' => 'UAE (+971)',
+                                '965' => 'Kuwait (+965)',
+                                '974' => 'Qatar (+974)',
+                                '968' => 'Oman (+968)',
+                                '973' => 'Bahrain (+973)',
+                                '962' => 'Jordan (+962)',
+                                '961' => 'Lebanon (+961)',
+                                '212' => 'Morocco (+212)',
+                                '216' => 'Tunisia (+216)',
+                                '213' => 'Algeria (+213)',
+                                '964' => 'Iraq (+964)',
+                                '963' => 'Syria (+963)',
+                                '967' => 'Yemen (+967)',
+                                '249' => 'Sudan (+249)',
+                                '218' => 'Libya (+218)',
+                                '1'   => 'USA / Canada (+1)',
+                                '44'  => 'United Kingdom (+44)',
+                                '49'  => 'Germany (+49)',
+                                '33'  => 'France (+33)',
+                                '90'  => 'Turkey (+90)',
+                                '91'  => 'India (+91)',
+                                '62'  => 'Indonesia (+62)',
+                                '92'  => 'Pakistan (+92)',
                             ])
                             ->default('20')
                             ->searchable()
@@ -336,6 +337,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                         TextInput::make('test_phone')
                             ->label(__('whatsapp-bridge-settings::messages.test_form.phone'))
                             ->placeholder('1000000000')
+                            ->prefixIcon('heroicon-o-phone')
                             ->required()
                             ->tel()
                             ->live(debounce: 300)
@@ -345,11 +347,12 @@ class WhatsappSettingsPage extends Page implements HasForms
 
                     Select::make('template_preset')
                         ->label(__('whatsapp-bridge-settings::messages.test_form.template'))
+                        ->prefixIcon('heroicon-o-document-text')
                         ->options([
-                            'custom' => '💬 Custom Text',
-                            'otp' => '🔒 OTP Verification Code',
-                            'order' => '📦 Order Confirmation',
-                            'welcome' => '👋 Welcome Message',
+                            'custom' => 'Custom Text',
+                            'otp' => 'OTP Verification Code',
+                            'order' => 'Order Confirmation',
+                            'welcome' => 'Welcome Message',
                         ])
                         ->default('custom')
                         ->live()

@@ -1,13 +1,56 @@
 <div
     x-data="{
-        phone: $wire.entangle('mountedActionsData.0.test_phone'),
-        countryCode: $wire.entangle('mountedActionsData.0.country_code'),
-        message: $wire.entangle('mountedActionsData.0.test_message'),
+        phone: '',
+        countryCode: '20',
+        message: '',
         appName: @js(config('app.name', 'WhatsApp Bridge')),
         currentTime: '',
         init() {
             this.updateTime();
             setInterval(() => this.updateTime(), 30000);
+
+            const sync = () => {
+                // 1. Try Livewire state
+                try {
+                    const actionData = $wire.mountedPageActionData || ($wire.mountedActionsData ? $wire.mountedActionsData[0] : null);
+                    if (actionData) {
+                        if (actionData.test_phone !== undefined) this.phone = actionData.test_phone || '';
+                        if (actionData.country_code !== undefined) this.countryCode = actionData.country_code || '20';
+                        if (actionData.test_message !== undefined) this.message = actionData.test_message || '';
+                    }
+                } catch (_) {}
+
+                // 2. Query DOM inputs directly inside the modal
+                const modal = this.$el.closest('.fi-modal-window, .fi-modal, form, [role=\'dialog\']') || document.body;
+
+                const phoneInput = modal.querySelector('input[name*="test_phone"], input[id*="test_phone"]');
+                if (phoneInput && phoneInput.value !== undefined) {
+                    this.phone = phoneInput.value;
+                }
+
+                const ccSelect = modal.querySelector('select[name*="country_code"], select[id*="country_code"]');
+                if (ccSelect && ccSelect.value !== undefined) {
+                    this.countryCode = ccSelect.value;
+                }
+
+                const msgTextarea = modal.querySelector('textarea[name*="test_message"], textarea[id*="test_message"]');
+                if (msgTextarea && msgTextarea.value !== undefined) {
+                    this.message = msgTextarea.value;
+                }
+            };
+
+            // Attach listeners to DOM input & change events
+            const modalEl = this.$el.closest('.fi-modal-window, .fi-modal, form, [role=\'dialog\']') || document.body;
+            modalEl.addEventListener('input', sync);
+            modalEl.addEventListener('change', sync);
+            modalEl.addEventListener('keyup', sync);
+
+            // Initial sync calls
+            sync();
+            this.$nextTick(sync);
+            setTimeout(sync, 100);
+            setTimeout(sync, 300);
+            setTimeout(sync, 800);
         },
         updateTime() {
             const now = new Date();
@@ -19,12 +62,10 @@
 
             if (!rawPhone) return '+' + cc + ' •••••••••';
 
-            // If phone starts with 0 (national format like 010...), strip leading 0
             if (rawPhone.startsWith('0')) {
                 rawPhone = rawPhone.substring(1);
             }
 
-            // If phone already starts with country code, don't duplicate
             if (rawPhone.startsWith(cc) && rawPhone.length > cc.length + 5) {
                 return '+' + rawPhone;
             }
@@ -39,7 +80,6 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;');
 
-            // Highlight OTP codes or variable tags like {otp} or digits
             const otpBadge = '<span style="font-weight:700;background:rgba(167,243,208,.8);color:#065f46;padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;display:inline-block;">482731</span>';
             escaped = escaped.replace(/\{otp\}/g, otpBadge);
 
