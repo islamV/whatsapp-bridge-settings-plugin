@@ -16,68 +16,67 @@
             setInterval(() => this.updateTime(), 30000);
 
             const sync = () => {
-                try {
-                    const wire = this.$wire;
-                    if (wire) {
-                        const actionData = wire.mountedPageActionData
-                            || wire.mountedActionData
-                            || (wire.mountedActionsData ? wire.mountedActionsData[0] : null)
-                            || wire.mountedTableActionData
-                            || wire.data;
+                const wire = this.$wire;
+                if (wire) {
+                    const data = wire.mountedPageActionData
+                        || wire.mountedActionData
+                        || (wire.mountedActionsData ? wire.mountedActionsData[0] : null)
+                        || wire.mountedTableActionData
+                        || wire.data;
 
-                        if (actionData) {
-                            if (actionData.test_message !== undefined && actionData.test_message !== null) this.message = String(actionData.test_message);
-                            if (actionData.country_code !== undefined && actionData.country_code !== null) this.countryCode = String(actionData.country_code);
-                            if (actionData.test_phone !== undefined && actionData.test_phone !== null) this.phone = String(actionData.test_phone);
-                        }
-                    } catch (_) {}
-
-                    const modal = this.$el.closest('.fi-modal-window, .fi-modal, form, [role=\'dialog\']') || document.body;
-
-                    const textarea = modal.querySelector('textarea');
-                    if (textarea && textarea.value !== undefined && textarea.value.trim().length > 0) {
-                        this.message = textarea.value;
+                    if (data) {
+                        if (data.test_message !== undefined && data.test_message !== null) this.message = String(data.test_message);
+                        if (data.country_code !== undefined && data.country_code !== null) this.countryCode = String(data.country_code);
+                        if (data.test_phone !== undefined && data.test_phone !== null) this.phone = String(data.test_phone);
                     }
-
-                    const phoneEl = modal.querySelector('input[type=\'tel\'], input[placeholder*=\'1000000000\']');
-                    if (phoneEl && phoneEl.value !== undefined && phoneEl.value.trim().length > 0) {
-                        this.phone = phoneEl.value;
-                    }
-                };
-
-                setInterval(sync, 150);
-                sync();
-            },
-            updateTime() {
-                const now = new Date();
-                this.currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-            },
-            formatFullPhone() {
-                const cc = (this.countryCode || '20').replace(/[^0-9]/g, '');
-                let rawPhone = (this.phone || '').replace(/[^0-9]/g, '');
-
-                if (!rawPhone) return '+' + cc + ' •••••••••';
-
-                if (rawPhone.startsWith('0')) {
-                    rawPhone = rawPhone.substring(1);
                 }
 
-                if (rawPhone.startsWith(cc) && rawPhone.length > cc.length + 5) {
-                    return '+' + rawPhone;
+                const modal = this.$el.closest('.fi-modal-window, .fi-modal, form, [role=\'dialog\']') || document.body;
+
+                const textarea = modal.querySelector('textarea');
+                if (textarea && textarea.value !== undefined && textarea.value.trim().length > 0) {
+                    this.message = textarea.value;
                 }
 
-                return '+' + cc + ' ' + rawPhone;
-            },
-            renderMessageHtml(text) {
-                if (!text) return '';
-                const otpBadge = '<span style=\'font-weight:700;background:rgba(167,243,208,.8);color:#065f46;padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;display:inline-block;\'>482731</span>';
-                return String(text)
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/\{otp\}/g, otpBadge);
+                const phoneEl = modal.querySelector('input[type=\'tel\'], input[placeholder*=\'1000000000\']');
+                if (phoneEl && phoneEl.value !== undefined && phoneEl.value.trim().length > 0) {
+                    this.phone = phoneEl.value;
+                }
+            };
+
+            setInterval(sync, 150);
+            sync();
+        },
+        updateTime() {
+            const now = new Date();
+            this.currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        },
+        formatFullPhone() {
+            const cc = String(this.countryCode || '20').replace(/[^0-9]/g, '');
+            let rawPhone = String(this.phone || '').replace(/[^0-9]/g, '');
+
+            if (!rawPhone) return '+' + cc + ' •••••••••';
+
+            if (rawPhone.startsWith('0')) {
+                rawPhone = rawPhone.substring(1);
             }
-        }"
+
+            if (rawPhone.startsWith(cc) && rawPhone.length > cc.length + 5) {
+                return '+' + rawPhone;
+            }
+
+            return '+' + cc + ' ' + rawPhone;
+        },
+        renderMessageHtml(text) {
+            if (!text) return '';
+            const otpBadge = '<span style=\'font-weight:700;background:rgba(167,243,208,.8);color:#065f46;padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;display:inline-block;\'>482731</span>';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\{otp\}/g, otpBadge);
+        }
+    }"
     class="w-full mt-2"
 >
     {{-- WhatsApp Live Preview Header --}}
