@@ -5,12 +5,79 @@
 @endphp
 
 <div
-    x-data="testMessageModalPreview({
-        appName: @js(config('app.name', 'WhatsApp Bridge')),
-        countryCode: @js($initCc),
+    x-data="{
         phone: @js($initPhone),
-        message: @js($initMessage)
-    })"
+        countryCode: @js($initCc),
+        message: @js($initMessage),
+        appName: @js(config('app.name', 'WhatsApp Bridge')),
+        currentTime: '',
+        init() {
+            this.updateTime();
+            setInterval(() => this.updateTime(), 30000);
+
+            const sync = () => {
+                try {
+                    const wire = this.$wire;
+                    if (wire) {
+                        const actionData = wire.mountedPageActionData
+                            || wire.mountedActionData
+                            || (wire.mountedActionsData ? wire.mountedActionsData[0] : null)
+                            || wire.mountedTableActionData
+                            || wire.data;
+
+                        if (actionData) {
+                            if (actionData.test_message !== undefined && actionData.test_message !== null) this.message = String(actionData.test_message);
+                            if (actionData.country_code !== undefined && actionData.country_code !== null) this.countryCode = String(actionData.country_code);
+                            if (actionData.test_phone !== undefined && actionData.test_phone !== null) this.phone = String(actionData.test_phone);
+                        }
+                    } catch (_) {}
+
+                    const modal = this.$el.closest('.fi-modal-window, .fi-modal, form, [role=\'dialog\']') || document.body;
+
+                    const textarea = modal.querySelector('textarea');
+                    if (textarea && textarea.value !== undefined && textarea.value.trim().length > 0) {
+                        this.message = textarea.value;
+                    }
+
+                    const phoneEl = modal.querySelector('input[type=\'tel\'], input[placeholder*=\'1000000000\']');
+                    if (phoneEl && phoneEl.value !== undefined && phoneEl.value.trim().length > 0) {
+                        this.phone = phoneEl.value;
+                    }
+                };
+
+                setInterval(sync, 150);
+                sync();
+            },
+            updateTime() {
+                const now = new Date();
+                this.currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            },
+            formatFullPhone() {
+                const cc = (this.countryCode || '20').replace(/[^0-9]/g, '');
+                let rawPhone = (this.phone || '').replace(/[^0-9]/g, '');
+
+                if (!rawPhone) return '+' + cc + ' •••••••••';
+
+                if (rawPhone.startsWith('0')) {
+                    rawPhone = rawPhone.substring(1);
+                }
+
+                if (rawPhone.startsWith(cc) && rawPhone.length > cc.length + 5) {
+                    return '+' + rawPhone;
+                }
+
+                return '+' + cc + ' ' + rawPhone;
+            },
+            renderMessageHtml(text) {
+                if (!text) return '';
+                const otpBadge = '<span style=\'font-weight:700;background:rgba(167,243,208,.8);color:#065f46;padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;display:inline-block;\'>482731</span>';
+                return String(text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\{otp\}/g, otpBadge);
+            }
+        }"
     class="w-full mt-2"
 >
     {{-- WhatsApp Live Preview Header --}}
@@ -84,124 +151,3 @@
         </div>
     </div>
 </div>
-
-<script>
-(function() {
-    function registerComponent() {
-        if (typeof Alpine === 'undefined') return;
-
-        Alpine.data('testMessageModalPreview', (config) => ({
-            phone: config?.phone || '',
-            countryCode: config?.countryCode || '20',
-            message: config?.message || '',
-            appName: config?.appName || 'WhatsApp Bridge',
-            currentTime: '',
-            syncInterval: null,
-
-            init() {
-                this.updateTime();
-                setInterval(() => this.updateTime(), 30000);
-
-                if (config?.phone) this.phone = config.phone;
-                if (config?.countryCode) this.countryCode = config.countryCode;
-                if (config?.message) this.message = config.message;
-
-                const sync = () => {
-                    // 1. Check Livewire component state
-                    try {
-                        const wire = this.$wire;
-                        if (wire) {
-                            const actionData = wire.mountedPageActionData
-                                || wire.mountedActionData
-                                || (wire.mountedActionsData ? wire.mountedActionsData[0] : null)
-                                || wire.mountedTableActionData
-                                || wire.data;
-
-                            if (actionData) {
-                                if (actionData.test_message) this.message = String(actionData.test_message);
-                                if (actionData.country_code) this.countryCode = String(actionData.country_code);
-                                if (actionData.test_phone) this.phone = String(actionData.test_phone);
-                            }
-                        }
-                    } catch (_) {}
-
-                    // 2. Inspect DOM elements directly in modal
-                    const modal = this.$el.closest('.fi-modal-window, .fi-modal, form, [role="dialog"]') || document.body;
-
-                    // Message textarea
-                    const textarea = modal.querySelector('textarea');
-                    if (textarea && textarea.value !== undefined && textarea.value.trim().length > 0) {
-                        this.message = textarea.value;
-                    }
-
-                    // Phone input
-                    const phoneEl = modal.querySelector('input[type="tel"], input[placeholder*="1000000000"], input[name*="test_phone"], input[id*="test_phone"]');
-                    if (phoneEl && phoneEl.value !== undefined && phoneEl.value.trim().length > 0) {
-                        this.phone = phoneEl.value;
-                    }
-
-                    // Country code
-                    const ccEl = modal.querySelector('select[name*="country_code"], select[id*="country_code"]');
-                    if (ccEl && ccEl.value) {
-                        this.countryCode = ccEl.value;
-                    }
-                };
-
-                const modalEl = this.$el.closest('.fi-modal-window, .fi-modal, form, [role="dialog"]') || document.body;
-                modalEl.addEventListener('input', sync);
-                modalEl.addEventListener('change', sync);
-                modalEl.addEventListener('keyup', sync);
-
-                // Polling sync every 150ms to guarantee live update on template dropdown change & typing
-                this.syncInterval = setInterval(sync, 150);
-
-                sync();
-                this.$nextTick(sync);
-            },
-
-            destroy() {
-                if (this.syncInterval) clearInterval(this.syncInterval);
-            },
-
-            updateTime() {
-                const now = new Date();
-                this.currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-            },
-
-            formatFullPhone() {
-                const cc = (this.countryCode || '20').replace(/[^0-9]/g, '');
-                let rawPhone = (this.phone || '').replace(/[^0-9]/g, '');
-
-                if (!rawPhone) return '+' + cc + ' •••••••••';
-
-                if (rawPhone.startsWith('0')) {
-                    rawPhone = rawPhone.substring(1);
-                }
-
-                if (rawPhone.startsWith(cc) && rawPhone.length > cc.length + 5) {
-                    return '+' + rawPhone;
-                }
-
-                return '+' + cc + ' ' + rawPhone;
-            },
-
-            renderMessageHtml(text) {
-                if (!text) return '';
-                let escaped = String(text)
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;');
-
-                const otpBadge = '<span style="font-weight:700;background:rgba(167,243,208,.8);color:#065f46;padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;display:inline-block;">482731</span>';
-                return escaped.replace(/\{otp\}/g, otpBadge);
-            }
-        }));
-    }
-
-    if (typeof Alpine !== 'undefined') {
-        registerComponent();
-    }
-    document.addEventListener('alpine:init', registerComponent);
-})();
-</script>
