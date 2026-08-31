@@ -6,7 +6,7 @@
 [![Plumb score](https://plumbphp.dev/badges/islamv/whatsapp-bridge-settings-plugin/composite.svg)](https://plumbphp.dev/islamv/whatsapp-bridge-settings-plugin)
 [![Security](https://plumbphp.dev/badges/islamv/whatsapp-bridge-settings-plugin/security.svg)](https://plumbphp.dev/islamv/whatsapp-bridge-settings-plugin)
 
-A reusable WhatsApp bridge and settings plugin for Laravel 13+ and Filament 5. Supports multiple providers: **Bridge**, **Meta WhatsApp Cloud API**, and **Twilio WhatsApp**.
+A reusable WhatsApp bridge and settings plugin for Laravel 12+ and Filament 5. Supports multiple providers: **Bridge**, **Meta WhatsApp Cloud API**, and **Twilio WhatsApp**.
 
 ## Features
 
