@@ -1,30 +1,66 @@
+@php
+    $initCc = $get('country_code') ?? '20';
+    $initPhone = $get('test_phone') ?? '';
+    $initMessage = $get('test_message') ?? '';
+@endphp
+
 <div
     x-data="{
-        phone: $wire.entangle('mountedActionsData.0.test_phone'),
-        countryCode: $wire.entangle('mountedActionsData.0.country_code'),
-        message: $wire.entangle('mountedActionsData.0.test_message'),
+        phone: @js($initPhone),
+        countryCode: @js($initCc),
+        message: @js($initMessage),
         appName: @js(config('app.name', 'WhatsApp Bridge')),
         currentTime: '',
         init() {
             this.updateTime();
             setInterval(() => this.updateTime(), 30000);
+
+            const sync = () => {
+                const wire = this.$wire;
+                if (wire) {
+                    const data = wire.mountedPageActionData
+                        || wire.mountedActionData
+                        || (wire.mountedActionsData ? wire.mountedActionsData[0] : null)
+                        || wire.mountedTableActionData
+                        || wire.data;
+
+                    if (data) {
+                        if (data.test_message !== undefined && data.test_message !== null) this.message = String(data.test_message);
+                        if (data.country_code !== undefined && data.country_code !== null) this.countryCode = String(data.country_code);
+                        if (data.test_phone !== undefined && data.test_phone !== null) this.phone = String(data.test_phone);
+                    }
+                }
+
+                const modal = this.$el.closest('.fi-modal-window, .fi-modal, form, [role=\'dialog\']') || document.body;
+
+                const textarea = modal.querySelector('textarea');
+                if (textarea && textarea.value !== undefined && textarea.value.trim().length > 0) {
+                    this.message = textarea.value;
+                }
+
+                const phoneEl = modal.querySelector('input[type=\'tel\'], input[placeholder*=\'1000000000\']');
+                if (phoneEl && phoneEl.value !== undefined && phoneEl.value.trim().length > 0) {
+                    this.phone = phoneEl.value;
+                }
+            };
+
+            setInterval(sync, 150);
+            sync();
         },
         updateTime() {
             const now = new Date();
             this.currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
         },
         formatFullPhone() {
-            const cc = (this.countryCode || '20').replace(/[^0-9]/g, '');
-            let rawPhone = (this.phone || '').replace(/[^0-9]/g, '');
+            const cc = String(this.countryCode || '20').replace(/[^0-9]/g, '');
+            let rawPhone = String(this.phone || '').replace(/[^0-9]/g, '');
 
             if (!rawPhone) return '+' + cc + ' •••••••••';
 
-            // If phone starts with 0 (national format like 010...), strip leading 0
             if (rawPhone.startsWith('0')) {
                 rawPhone = rawPhone.substring(1);
             }
 
-            // If phone already starts with country code, don't duplicate
             if (rawPhone.startsWith(cc) && rawPhone.length > cc.length + 5) {
                 return '+' + rawPhone;
             }
@@ -33,17 +69,12 @@
         },
         renderMessageHtml(text) {
             if (!text) return '';
-            let escaped = String(text)
+            const otpBadge = '<span style=\'font-weight:700;background:rgba(167,243,208,.8);color:#065f46;padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;display:inline-block;\'>482731</span>';
+            return String(text)
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
-
-            // Highlight OTP codes or variable tags like {otp} or digits
-            const otpBadge = '<span style="font-weight:700;background:rgba(167,243,208,.8);color:#065f46;padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;display:inline-block;">482731</span>';
-            escaped = escaped.replace(/\{otp\}/g, otpBadge);
-
-            return escaped;
+                .replace(/\{otp\}/g, otpBadge);
         }
     }"
     class="w-full mt-2"

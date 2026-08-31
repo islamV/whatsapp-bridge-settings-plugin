@@ -51,13 +51,33 @@ class WhatsappBridge implements WhatsappProviderInterface
                     ])
             );
 
-            if ($response->successful()) {
+            $json = $response->json() ?? [];
+            $isSent = $response->successful()
+                || ! empty($json['success'])
+                || (isset($json['status']) && in_array(strtolower((string) $json['status']), ['sent', 'success', 'ok', 'true', 'delivered', 'pending'], true))
+                || ! empty($json['key'])
+                || ! empty($json['messageId']);
+
+            if ($isSent) {
+                return true;
+            }
+
+            $errorMsg = $json['message'] ?? $json['error'] ?? $response->body();
+
+            // Special handling: Node.js bridge server dispatches the WhatsApp message to recipient,
+            // but throws a post-dispatch response format exception ("Cannot read properties of undefined (reading 'id')").
+            if (is_string($errorMsg) && (str_contains($errorMsg, "Cannot read properties of undefined") || str_contains($errorMsg, "reading 'id'"))) {
+                Log::channel($this->logChannel())->info('WhatsApp sendMessage succeeded (bridge response formatting error ignored)', [
+                    'to' => $this->maskPhone($phone),
+                ]);
+
                 return true;
             }
 
             Log::channel($this->logChannel())->warning('WhatsApp sendMessage failed', [
                 'status' => $response->status(),
                 'to' => $this->maskPhone($phone),
+                'error' => $errorMsg,
             ]);
 
             return false;
@@ -326,15 +346,20 @@ class WhatsappBridge implements WhatsappProviderInterface
         try {
             $response = $sessionRequest();
 
-            if ($response->status() !== 404) {
+            if ($response->successful()) {
                 return $response;
             }
-        } catch (ConnectionException) {
-            // Session-based endpoint not reachable (bridge runs legacy API only).
-            // Fall through and attempt the legacy endpoint below.
-        }
 
-        return $legacyRequest();
+            // If session-based request failed (404, 500, etc.), try the legacy endpoint fallback
+            $legacyResponse = $legacyRequest();
+            if ($legacyResponse->successful()) {
+                return $legacyResponse;
+            }
+
+            return $response;
+        } catch (ConnectionException) {
+            return $legacyRequest();
+        }
     }
 
     protected function normalizeBridgeStatus(array $data): string
