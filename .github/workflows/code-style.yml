@@ -28,4 +28,4 @@ jobs:
         uses: ramsey/composer-install@v3
 
       - name: Run Pint
-        run: vendor/bin/pint --test
+        run: php vendor/bin/pint --test
