@@ -3,12 +3,13 @@
 namespace Islamv\WhatsappBridgeSettingsPlugin\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
 
 /**
  * @method static bool sendMessage(string $to, string $message, array $options = [])
  * @method static bool sendOtp(string $to, string $otp, array $options = [])
  *
- * @see \Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface
+ * @see WhatsappProviderInterface
  */
 class WhatsappBridge extends Facade
 {

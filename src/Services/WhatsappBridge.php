@@ -44,7 +44,7 @@ class WhatsappBridge implements WhatsappProviderInterface
                     ]),
                 fn () => Http::timeout((int) ($config['timeout'] ?? 30))
                     ->withToken((string) $config['api_token'])
-                    ->post(rtrim((string) $config['api_base_url'], '/') . '/messages', [
+                    ->post(rtrim((string) $config['api_base_url'], '/').'/messages', [
                         'to' => $phone,
                         'text' => $message,
                         'sender' => $config['sender'] ?? null,
@@ -66,7 +66,7 @@ class WhatsappBridge implements WhatsappProviderInterface
 
             // Special handling: Node.js bridge server dispatches the WhatsApp message to recipient,
             // but throws a post-dispatch response format exception ("Cannot read properties of undefined (reading 'id')").
-            if (is_string($errorMsg) && (str_contains($errorMsg, "Cannot read properties of undefined") || str_contains($errorMsg, "reading 'id'"))) {
+            if (is_string($errorMsg) && (str_contains($errorMsg, 'Cannot read properties of undefined') || str_contains($errorMsg, "reading 'id'"))) {
                 Log::channel($this->logChannel())->info('WhatsApp sendMessage succeeded (bridge response formatting error ignored)', [
                     'to' => $this->maskPhone($phone),
                 ]);
@@ -113,7 +113,7 @@ class WhatsappBridge implements WhatsappProviderInterface
     public function checkBridgeHealth(?string $baseUrl = null): array
     {
         if ($baseUrl === null) {
-            $config  = $this->settings->getProviderConfig('bridge');
+            $config = $this->settings->getProviderConfig('bridge');
             $baseUrl = $config['api_base_url'] ?? null;
         }
 
@@ -121,7 +121,7 @@ class WhatsappBridge implements WhatsappProviderInterface
             return ['reachable' => false, 'status' => null, 'latency_ms' => null, 'url' => null];
         }
 
-        $url = rtrim((string) $baseUrl, '/') . '/health';
+        $url = rtrim((string) $baseUrl, '/').'/health';
 
         try {
             $start = microtime(true);
@@ -134,17 +134,17 @@ class WhatsappBridge implements WhatsappProviderInterface
                 $body = $response->json();
 
                 return [
-                    'reachable'  => true,
-                    'status'     => $body['status'] ?? 'ok',
+                    'reachable' => true,
+                    'status' => $body['status'] ?? 'ok',
                     'latency_ms' => $latency,
-                    'url'        => $url,
+                    'url' => $url,
                 ];
             }
 
             return ['reachable' => false, 'status' => null, 'latency_ms' => $latency, 'url' => $url];
         } catch (\Throwable $e) {
             Log::channel($this->logChannel())->debug('WhatsApp bridge /health check failed', [
-                'url'     => $url,
+                'url' => $url,
                 'message' => $e->getMessage(),
             ]);
 
@@ -167,7 +167,7 @@ class WhatsappBridge implements WhatsappProviderInterface
                     ->get($this->buildSessionUrl($config, 'check-connection-session')),
                 fn () => Http::timeout((int) ($config['timeout'] ?? 30))
                     ->withToken((string) $config['api_token'])
-                    ->get(rtrim((string) $config['api_base_url'], '/') . '/status')
+                    ->get(rtrim((string) $config['api_base_url'], '/').'/status')
             );
 
             if ($response->successful()) {
@@ -206,13 +206,13 @@ class WhatsappBridge implements WhatsappProviderInterface
                     ->post($this->buildSessionUrl($config, 'generate-token')),
                 fn () => Http::timeout($qrTimeout)
                     ->withToken((string) $config['api_token'])
-                    ->post(rtrim((string) $config['api_base_url'], '/') . '/qr')
+                    ->post(rtrim((string) $config['api_base_url'], '/').'/qr')
             );
 
             $status = $response->status();
 
             if ($response->successful()) {
-                $data   = $response->json();
+                $data = $response->json();
                 $qrcode = $data['qrcode'] ?? $data['qr'] ?? null;
 
                 if ($qrcode === null) {
@@ -225,14 +225,14 @@ class WhatsappBridge implements WhatsappProviderInterface
 
             $reason = match ($status) {
                 401, 403 => 'auth_failed',
-                408       => 'timeout',
-                default   => 'error',
+                408 => 'timeout',
+                default => 'error',
             };
 
             Log::channel($this->logChannel())->warning('WhatsApp generateQrCode non-success', [
                 'http_status' => $status,
-                'body'        => $response->body(),
-                'reason'      => $reason,
+                'body' => $response->body(),
+                'reason' => $reason,
             ]);
 
             return ['qrcode' => null, 'reason' => $reason];
@@ -277,7 +277,7 @@ class WhatsappBridge implements WhatsappProviderInterface
                     ->post($this->buildSessionUrl($config, 'close-session')),
                 fn () => Http::timeout((int) ($config['timeout'] ?? 30))
                     ->withToken((string) $config['api_token'])
-                    ->post(rtrim((string) $config['api_base_url'], '/') . '/disconnect')
+                    ->post(rtrim((string) $config['api_base_url'], '/').'/disconnect')
             );
 
             return $response->successful();
@@ -305,7 +305,7 @@ class WhatsappBridge implements WhatsappProviderInterface
                     ->get($this->buildSessionUrl($config, 'check-connection-session')),
                 fn () => Http::timeout((int) ($config['timeout'] ?? 30))
                     ->withToken((string) $config['api_token'])
-                    ->get(rtrim((string) $config['api_base_url'], '/') . '/status')
+                    ->get(rtrim((string) $config['api_base_url'], '/').'/status')
             );
 
             if ($response->successful()) {
@@ -333,12 +333,12 @@ class WhatsappBridge implements WhatsappProviderInterface
     protected function buildSessionUrl(array $config, string $action): string
     {
         return rtrim((string) $config['api_base_url'], '/')
-            . '/api/'
-            . rawurlencode((string) $config['api_token'])
-            . '/'
-            . $action
-            . '/'
-            . rawurlencode($this->getSessionName($config));
+            .'/api/'
+            .rawurlencode((string) $config['api_token'])
+            .'/'
+            .$action
+            .'/'
+            .rawurlencode($this->getSessionName($config));
     }
 
     protected function requestWithFallback(array $config, callable $sessionRequest, callable $legacyRequest): Response

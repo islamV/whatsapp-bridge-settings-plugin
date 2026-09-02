@@ -18,7 +18,7 @@ trait ManagesPhoneNumbers
 
         if (strlen($cleaned) <= 10 && ! str_starts_with($cleaned, '00')) {
             $cleaned = ltrim($cleaned, '0');
-            $cleaned = $defaultCountryCode . $cleaned;
+            $cleaned = $defaultCountryCode.$cleaned;
         }
 
         return $cleaned;
@@ -32,6 +32,6 @@ trait ManagesPhoneNumbers
             return str_repeat('*', $len);
         }
 
-        return substr($phone, 0, 4) . str_repeat('*', $len - 8) . substr($phone, -4);
+        return substr($phone, 0, 4).str_repeat('*', $len - 8).substr($phone, -4);
     }
 }

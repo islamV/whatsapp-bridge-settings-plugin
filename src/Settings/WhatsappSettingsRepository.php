@@ -5,6 +5,7 @@ namespace Islamv\WhatsappBridgeSettingsPlugin\Settings;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class WhatsappSettingsRepository
 {
@@ -48,7 +49,7 @@ class WhatsappSettingsRepository
 
     public function save(array $data): void
     {
-        \Illuminate\Support\Facades\Log::info('WhatsappSettingsRepository::save input:', $data);
+        Log::info('WhatsappSettingsRepository::save input:', $data);
         $existing = $this->getFromDb();
         $storedRecordId = $this->getStoredRecordId();
 
@@ -70,20 +71,20 @@ class WhatsappSettingsRepository
         $bridgeFinal = $providers['bridge'] ?? [];
 
         $record = [
-            'active_provider'      => $activeProvider,
-            'provider_name'        => $data['provider_name'] ?? $existing['provider_name'] ?? 'default',
+            'active_provider' => $activeProvider,
+            'provider_name' => $data['provider_name'] ?? $existing['provider_name'] ?? 'default',
             'default_country_code' => $data['default_country_code'] ?? $existing['default_country_code'] ?? '20',
-            'otp_enabled'          => $data['otp_enabled'] ?? $existing['otp_enabled'] ?? true,
-            'messages_enabled'     => $data['messages_enabled'] ?? $existing['messages_enabled'] ?? true,
-            'otp_template'         => $data['otp_template'] ?? $existing['otp_template'] ?? null,
-            'timeout'              => (int) ($data['timeout'] ?? $existing['timeout'] ?? 30),
-            'extra_settings'       => isset($data['extra_settings'])
+            'otp_enabled' => $data['otp_enabled'] ?? $existing['otp_enabled'] ?? true,
+            'messages_enabled' => $data['messages_enabled'] ?? $existing['messages_enabled'] ?? true,
+            'otp_template' => $data['otp_template'] ?? $existing['otp_template'] ?? null,
+            'timeout' => (int) ($data['timeout'] ?? $existing['timeout'] ?? 30),
+            'extra_settings' => isset($data['extra_settings'])
                 ? json_encode($data['extra_settings'])
                 : ($existing['extra_settings'] ?? null),
             // Legacy flat columns kept in sync so DB viewers always show current bridge config.
             'api_base_url' => $bridgeFinal['api_base_url'] ?? null,
-            'api_token'    => $bridgeFinal['api_token'] ?? null,   // stored encrypted by sanitizeProviderConfig
-            'sender'       => $bridgeFinal['sender'] ?? null,
+            'api_token' => $bridgeFinal['api_token'] ?? null,   // stored encrypted by sanitizeProviderConfig
+            'sender' => $bridgeFinal['sender'] ?? null,
         ];
 
         $record['providers'] = json_encode($providers);
@@ -104,13 +105,13 @@ class WhatsappSettingsRepository
         $storedRecordId = $this->getStoredRecordId();
 
         $record = [
-            'active_provider'      => $data['active_provider'] ?? $existing['active_provider'] ?? 'bridge',
-            'provider_name'        => $data['provider_name'] ?? $existing['provider_name'] ?? 'default',
+            'active_provider' => $data['active_provider'] ?? $existing['active_provider'] ?? 'bridge',
+            'provider_name' => $data['provider_name'] ?? $existing['provider_name'] ?? 'default',
             'default_country_code' => $data['default_country_code'] ?? $existing['default_country_code'] ?? '20',
-            'otp_enabled'          => $data['otp_enabled'] ?? $existing['otp_enabled'] ?? true,
-            'messages_enabled'     => $data['messages_enabled'] ?? $existing['messages_enabled'] ?? true,
-            'otp_template'         => $data['otp_template'] ?? $existing['otp_template'] ?? null,
-            'timeout'              => (int) ($data['timeout'] ?? $existing['timeout'] ?? 30),
+            'otp_enabled' => $data['otp_enabled'] ?? $existing['otp_enabled'] ?? true,
+            'messages_enabled' => $data['messages_enabled'] ?? $existing['messages_enabled'] ?? true,
+            'otp_template' => $data['otp_template'] ?? $existing['otp_template'] ?? null,
+            'timeout' => (int) ($data['timeout'] ?? $existing['timeout'] ?? 30),
         ];
 
         if ($storedRecordId !== null) {
@@ -278,11 +279,11 @@ class WhatsappSettingsRepository
         foreach ($sensitiveFields as $field) {
             if (isset($config[$field]) && $config[$field] !== null) {
                 try {
-                    $config[$field . '_raw'] = Crypt::decryptString($config[$field]);
-                    $config[$field] = $config[$field . '_raw'];
+                    $config[$field.'_raw'] = Crypt::decryptString($config[$field]);
+                    $config[$field] = $config[$field.'_raw'];
                 } catch (\Throwable) {
                     // Decryption failed. Keep the raw value to avoid losing plain text tokens.
-                    $config[$field . '_raw'] = $config[$field];
+                    $config[$field.'_raw'] = $config[$field];
                 }
             }
         }
@@ -325,10 +326,10 @@ class WhatsappSettingsRepository
             if (isset($config[$field]) && $config[$field] !== null) {
                 $token = (string) $config[$field];
                 $config[$field] = $this->maskToken($token);
-                $config['has_' . $field] = true;
+                $config['has_'.$field] = true;
             } else {
                 $config[$field] = null;
-                $config['has_' . $field] = false;
+                $config['has_'.$field] = false;
             }
         }
 
@@ -426,6 +427,6 @@ class WhatsappSettingsRepository
             return str_repeat('•', $len);
         }
 
-        return substr($token, 0, 4) . str_repeat('•', $len - 8) . substr($token, -4);
+        return substr($token, 0, 4).str_repeat('•', $len - 8).substr($token, -4);
     }
 }
