@@ -7,6 +7,7 @@ use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
 use Islamv\WhatsappBridgeSettingsPlugin\Services\MetaWhatsapp;
 use Islamv\WhatsappBridgeSettingsPlugin\Services\TwilioWhatsapp;
 use Islamv\WhatsappBridgeSettingsPlugin\Services\WhatsappBridge;
+use Islamv\WhatsappBridgeSettingsPlugin\Services\WhatsappOtpSender;
 use Islamv\WhatsappBridgeSettingsPlugin\Settings\WhatsappSettingsRepository;
 use Islamv\WhatsappBridgeSettingsPlugin\WhatsappBridgeSettingsPluginServiceProvider;
 use Orchestra\Testbench\TestCase;
@@ -22,7 +23,7 @@ class ProviderSelectionTest extends TestCase
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('app.key', 'base64:' . base64_encode(random_bytes(32)));
+        $app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
         $app['config']->set('database.default', 'sqlite');
         $app['config']->set('database.connections.sqlite', [
             'driver' => 'sqlite',
@@ -124,7 +125,7 @@ class ProviderSelectionTest extends TestCase
         $repository->save(['active_provider' => 'meta']);
         $repository->clearCache();
 
-        $otpSender = $this->app->make(\Islamv\WhatsappBridgeSettingsPlugin\Services\WhatsappOtpSender::class);
+        $otpSender = $this->app->make(WhatsappOtpSender::class);
 
         $reflection = new \ReflectionProperty($otpSender, 'whatsapp');
         $reflection->setAccessible(true);

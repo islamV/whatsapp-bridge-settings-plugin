@@ -1,0 +1,31 @@
+name: Check Code Style
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  pint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@9e7209053380712f6d547d46997b32b3d6ba3d24 # v2.32.0
+        with:
+          php-version: '8.3'
+          extensions: dom, curl, libxml, mbstring, zip
+          coverage: none
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@57532b4be5fda96c2fb4aca2a8dbdb0cbc85078a # v3.0.0
+
+      - name: Run Pint
+        run: vendor/bin/pint --test

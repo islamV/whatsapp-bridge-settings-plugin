@@ -3,9 +3,9 @@
 namespace Islamv\WhatsappBridgeSettingsPlugin\Tests;
 
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
 use Islamv\WhatsappBridgeSettingsPlugin\Settings\WhatsappSettingsRepository;
 use Islamv\WhatsappBridgeSettingsPlugin\WhatsappBridgeSettingsPluginServiceProvider;
 use Orchestra\Testbench\TestCase;
@@ -21,7 +21,7 @@ class WhatsappBridgeTest extends TestCase
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('app.key', 'base64:' . base64_encode(random_bytes(32)));
+        $app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
         $app['config']->set('database.default', 'sqlite');
         $app['config']->set('database.connections.sqlite', [
             'driver' => 'sqlite',
@@ -73,7 +73,7 @@ class WhatsappBridgeTest extends TestCase
             'whatsapp-api.test/*' => Http::response(['status' => 'sent'], 200),
         ]);
 
-        $bridge = $this->app->make(\Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface::class);
+        $bridge = $this->app->make(WhatsappProviderInterface::class);
 
         $result = $bridge->sendMessage('201000000000', 'Hello World');
 
@@ -86,7 +86,7 @@ class WhatsappBridgeTest extends TestCase
             'whatsapp-api.test/*' => Http::response([], 500),
         ]);
 
-        $bridge = $this->app->make(\Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface::class);
+        $bridge = $this->app->make(WhatsappProviderInterface::class);
 
         $result = $bridge->sendMessage('201000000000', 'Hello World');
 
@@ -101,7 +101,7 @@ class WhatsappBridgeTest extends TestCase
             },
         ]);
 
-        $bridge = $this->app->make(\Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface::class);
+        $bridge = $this->app->make(WhatsappProviderInterface::class);
 
         $result = $bridge->sendMessage('201000000000', 'Hello World');
 
@@ -117,7 +117,7 @@ class WhatsappBridgeTest extends TestCase
         ]);
         $repository->clearCache();
 
-        $bridge = $this->app->make(\Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface::class);
+        $bridge = $this->app->make(WhatsappProviderInterface::class);
 
         $result = $bridge->sendMessage('201000000000', 'Hello World');
 
@@ -138,7 +138,7 @@ class WhatsappBridgeTest extends TestCase
             return Http::response([], 200);
         });
 
-        $bridge = $this->app->make(\Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface::class);
+        $bridge = $this->app->make(WhatsappProviderInterface::class);
 
         $result = $bridge->sendOtp('201000000000', '987654');
 
@@ -156,7 +156,7 @@ class WhatsappBridgeTest extends TestCase
         $repository->save(['otp_enabled' => false]);
         $repository->clearCache();
 
-        $bridge = $this->app->make(\Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface::class);
+        $bridge = $this->app->make(WhatsappProviderInterface::class);
 
         $result = $bridge->sendOtp('201000000000', '123456');
 

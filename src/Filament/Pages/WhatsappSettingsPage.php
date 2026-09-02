@@ -5,8 +5,8 @@ namespace Islamv\WhatsappBridgeSettingsPlugin\Filament\Pages;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Components\ViewField;
@@ -21,7 +21,6 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
-
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
@@ -36,7 +35,7 @@ class WhatsappSettingsPage extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
     protected static ?string $slug = 'whatsapp-settings';
 
@@ -301,7 +300,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                         Select::make('country_code')
                             ->label(__('whatsapp-bridge-settings::messages.test_form.country_code'))
                             ->options([
-                                '20'  => '🇪🇬 Egypt (+20)',
+                                '20' => '🇪🇬 Egypt (+20)',
                                 '966' => '🇸🇦 Saudi Arabia (+966)',
                                 '971' => '🇦🇪 UAE (+971)',
                                 '965' => '🇰🇼 Kuwait (+965)',
@@ -318,14 +317,14 @@ class WhatsappSettingsPage extends Page implements HasForms
                                 '967' => '🇾🇪 Yemen (+967)',
                                 '249' => '🇸🇩 Sudan (+249)',
                                 '218' => '🇱🇾 Libya (+218)',
-                                '1'   => '🇺🇸 USA / Canada (+1)',
-                                '44'  => '🇬🇧 United Kingdom (+44)',
-                                '49'  => '🇩🇪 Germany (+49)',
-                                '33'  => '🇫🇷 France (+33)',
-                                '90'  => '🇹🇷 Turkey (+90)',
-                                '91'  => '🇮🇳 India (+91)',
-                                '62'  => '🇮🇩 Indonesia (+62)',
-                                '92'  => '🇵🇰 Pakistan (+92)',
+                                '1' => '🇺🇸 USA / Canada (+1)',
+                                '44' => '🇬🇧 United Kingdom (+44)',
+                                '49' => '🇩🇪 Germany (+49)',
+                                '33' => '🇫🇷 France (+33)',
+                                '90' => '🇹🇷 Turkey (+90)',
+                                '91' => '🇮🇳 India (+91)',
+                                '62' => '🇮🇩 Indonesia (+62)',
+                                '92' => '🇵🇰 Pakistan (+92)',
                             ])
                             ->default('20')
                             ->searchable()
@@ -362,7 +361,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                             $presets = [
                                 'otp' => $otpSample,
                                 'order' => 'Hello! Your order #10492 has been confirmed and is being prepared.',
-                                'welcome' => 'Welcome to ' . config('app.name', 'our system') . '! Thank you for connecting with us on WhatsApp.',
+                                'welcome' => 'Welcome to '.config('app.name', 'our system').'! Thank you for connecting with us on WhatsApp.',
                             ];
 
                             if (isset($presets[$state])) {
@@ -395,7 +394,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                     if (str_starts_with($rawPhone, $cc)) {
                         $fullPhone = $rawPhone;
                     } else {
-                        $fullPhone = $cc . $rawPhone;
+                        $fullPhone = $cc.$rawPhone;
                     }
 
                     $success = $whatsapp->sendMessage(
@@ -416,7 +415,7 @@ class WhatsappSettingsPage extends Page implements HasForms
     public function saveGeneral(): void
     {
         $state = $this->form->getState();
-        
+
         app(WhatsappSettingsRepository::class)->saveGeneral($state);
 
         Notification::make()
@@ -509,7 +508,7 @@ class WhatsappSettingsPage extends Page implements HasForms
 
         if (empty($formUrl)) {
             $settings = app(WhatsappSettingsRepository::class)->all();
-            $formUrl  = $settings['providers']['bridge']['api_base_url'] ?? null;
+            $formUrl = $settings['providers']['bridge']['api_base_url'] ?? null;
         }
 
         $bridge = app(WhatsappBridge::class);
@@ -573,7 +572,6 @@ class WhatsappSettingsPage extends Page implements HasForms
         return __('whatsapp-bridge-settings::messages.page_heading');
     }
 
-
     protected function fillForm(): void
     {
         $settings = app(WhatsappSettingsRepository::class)->all();
@@ -636,18 +634,18 @@ class WhatsappSettingsPage extends Page implements HasForms
     protected function renderConnectionOverview(): HtmlString
     {
         // ── 1. Bridge API state ─────────────────────────────────────────────────
-        $reachable       = $this->bridgeHealth['reachable'] ?? false;
-        $latency         = $this->bridgeHealth['latency_ms'] ?? null;
-        $checkedUrl      = $this->bridgeHealth['url'] ?? null;
-        $formUrl         = data_get($this->data, 'providers.bridge.api_base_url');
-        $hasUrl          = ! empty($formUrl) || ! empty($checkedUrl);
-        $displayUrl      = $formUrl ?: ($checkedUrl ? rtrim(str_replace('/health', '', $checkedUrl), '/') : '—');
+        $reachable = $this->bridgeHealth['reachable'] ?? false;
+        $latency = $this->bridgeHealth['latency_ms'] ?? null;
+        $checkedUrl = $this->bridgeHealth['url'] ?? null;
+        $formUrl = data_get($this->data, 'providers.bridge.api_base_url');
+        $hasUrl = ! empty($formUrl) || ! empty($checkedUrl);
+        $displayUrl = $formUrl ?: ($checkedUrl ? rtrim(str_replace('/health', '', $checkedUrl), '/') : '—');
         $cleanDisplayUrl = $displayUrl !== '—' ? preg_replace('#^https?://#', '', $displayUrl) : '—';
 
         if ($reachable) {
-            $apiDot = '<span class="relative inline-flex h-2 w-2">' .
-                          '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>' .
-                          '<span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>' .
+            $apiDot = '<span class="relative inline-flex h-2 w-2">'.
+                          '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>'.
+                          '<span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>'.
                       '</span>';
             $apiBadge = 'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20';
             $apiStatusText = __('whatsapp-bridge-settings::messages.bridge.health_reachable');
@@ -658,7 +656,7 @@ class WhatsappSettingsPage extends Page implements HasForms
                     $latency <= 800 => 'text-amber-600 dark:text-amber-400 font-medium',
                     default => 'text-rose-600 dark:text-rose-400 font-medium',
                 };
-                $latencyHtml = '<span class="' . $latencyColor . '">⚡ ' . e($latency) . ' ms</span>';
+                $latencyHtml = '<span class="'.$latencyColor.'">⚡ '.e($latency).' ms</span>';
             } else {
                 $latencyHtml = '<span class="text-gray-400 dark:text-gray-500">—</span>';
             }
@@ -668,9 +666,9 @@ class WhatsappSettingsPage extends Page implements HasForms
             $apiStatusText = __('whatsapp-bridge-settings::messages.bridge.health_not_configured');
             $latencyHtml = '<span class="text-gray-400 dark:text-gray-500">—</span>';
         } else {
-            $apiDot = '<span class="relative inline-flex h-2 w-2">' .
-                          '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>' .
-                          '<span class="relative inline-flex h-2 w-2 rounded-full bg-rose-500 dark:bg-rose-400"></span>' .
+            $apiDot = '<span class="relative inline-flex h-2 w-2">'.
+                          '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>'.
+                          '<span class="relative inline-flex h-2 w-2 rounded-full bg-rose-500 dark:bg-rose-400"></span>'.
                       '</span>';
             $apiBadge = 'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/20';
             $apiStatusText = __('whatsapp-bridge-settings::messages.bridge.health_unreachable');
@@ -680,22 +678,22 @@ class WhatsappSettingsPage extends Page implements HasForms
         // ── 2. WhatsApp Session state ───────────────────────────────────────────
         $waStatusLabel = match ($this->status) {
             'connected' => __('whatsapp-bridge-settings::messages.status.connected'),
-            'waiting'   => __('whatsapp-bridge-settings::messages.status.waiting'),
-            default     => __('whatsapp-bridge-settings::messages.status.disconnected'),
+            'waiting' => __('whatsapp-bridge-settings::messages.status.waiting'),
+            default => __('whatsapp-bridge-settings::messages.status.disconnected'),
         };
 
         [$waDot, $waBadgeClass] = match ($this->status) {
             'connected' => [
-                '<span class="relative inline-flex h-2 w-2">' .
-                    '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>' .
-                    '<span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>' .
+                '<span class="relative inline-flex h-2 w-2">'.
+                    '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>'.
+                    '<span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>'.
                 '</span>',
                 'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
             ],
             'waiting' => [
-                '<span class="relative inline-flex h-2 w-2">' .
-                    '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>' .
-                    '<span class="relative inline-flex h-2 w-2 rounded-full bg-amber-500 dark:bg-amber-400"></span>' .
+                '<span class="relative inline-flex h-2 w-2">'.
+                    '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>'.
+                    '<span class="relative inline-flex h-2 w-2 rounded-full bg-amber-500 dark:bg-amber-400"></span>'.
                 '</span>',
                 'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
             ],
@@ -710,8 +708,8 @@ class WhatsappSettingsPage extends Page implements HasForms
 
         $sessionStatusText = match ($this->status) {
             'connected' => __('whatsapp-bridge-settings::messages.bridge.active_session'),
-            'waiting'   => __('whatsapp-bridge-settings::messages.bridge.scan_qr_hint'),
-            default     => __('whatsapp-bridge-settings::messages.bridge.no_session'),
+            'waiting' => __('whatsapp-bridge-settings::messages.bridge.scan_qr_hint'),
+            default => __('whatsapp-bridge-settings::messages.bridge.no_session'),
         };
 
         // ── 3. Instance state ───────────────────────────────────────────────────
@@ -721,14 +719,14 @@ class WhatsappSettingsPage extends Page implements HasForms
         $warningAlert = '';
         if (! $reachable && $hasUrl) {
             $warningAlert =
-                '<div class="rounded-xl border border-rose-200 bg-rose-50/80 dark:border-rose-500/30 dark:bg-rose-500/10 p-4 flex items-start gap-3">' .
-                    '<div class="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5">' .
-                        '<svg width="16" height="16" style="width:1rem;height:1rem;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>' .
-                    '</div>' .
-                    '<div>' .
-                        '<h4 class="text-xs font-semibold text-rose-800 dark:text-rose-300">' . e(__('whatsapp-bridge-settings::messages.bridge.bridge_unreachable_title')) . '</h4>' .
-                        '<p class="text-xs text-rose-600 dark:text-rose-400 mt-0.5">' . e(__('whatsapp-bridge-settings::messages.bridge.bridge_unreachable_body')) . '</p>' .
-                    '</div>' .
+                '<div class="rounded-xl border border-rose-200 bg-rose-50/80 dark:border-rose-500/30 dark:bg-rose-500/10 p-4 flex items-start gap-3">'.
+                    '<div class="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5">'.
+                        '<svg width="16" height="16" style="width:1rem;height:1rem;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>'.
+                    '</div>'.
+                    '<div>'.
+                        '<h4 class="text-xs font-semibold text-rose-800 dark:text-rose-300">'.e(__('whatsapp-bridge-settings::messages.bridge.bridge_unreachable_title')).'</h4>'.
+                        '<p class="text-xs text-rose-600 dark:text-rose-400 mt-0.5">'.e(__('whatsapp-bridge-settings::messages.bridge.bridge_unreachable_body')).'</p>'.
+                    '</div>'.
                 '</div>';
         }
 
@@ -737,114 +735,113 @@ class WhatsappSettingsPage extends Page implements HasForms
         if ($this->status === 'waiting') {
             $qrContent = '';
             if ($this->qrCode && (str_starts_with($this->qrCode, 'data:image') || str_contains($this->qrCode, 'base64'))) {
-                $qrContent = '<img src="' . e($this->qrCode) . '" alt="' . e(__('whatsapp-bridge-settings::messages.qr.qr_image_alt')) . '" class="max-w-45 rounded-xl border border-gray-200 dark:border-gray-700 p-2 bg-white shadow-xs" />';
+                $qrContent = '<img src="'.e($this->qrCode).'" alt="'.e(__('whatsapp-bridge-settings::messages.qr.qr_image_alt')).'" class="max-w-45 rounded-xl border border-gray-200 dark:border-gray-700 p-2 bg-white shadow-xs" />';
             } elseif ($this->qrCode) {
-                $qrContent = '<div class="rounded-xl border border-gray-200 dark:border-gray-700 p-3 bg-white max-w-55 shadow-xs">' . $this->qrCode . '</div>';
+                $qrContent = '<div class="rounded-xl border border-gray-200 dark:border-gray-700 p-3 bg-white max-w-55 shadow-xs">'.$this->qrCode.'</div>';
             } else {
-                $qrContent = '<div class="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400"><svg width="16" height="16" style="width:1rem;height:1rem;" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>' . e(__('whatsapp-bridge-settings::messages.qr.qr_generating')) . '</div>';
+                $qrContent = '<div class="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400"><svg width="16" height="16" style="width:1rem;height:1rem;" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>'.e(__('whatsapp-bridge-settings::messages.qr.qr_generating')).'</div>';
             }
 
             $qrSection =
-                '<div wire:poll.2s="checkStatus" class="mt-4 p-5 bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-500/30 shadow-xs text-center flex flex-col items-center justify-center">' .
-                    '<h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">' . e(__('whatsapp-bridge-settings::messages.qr.qr_scan_title')) . '</h4>' .
-                    '<p class="text-xs text-amber-600 dark:text-amber-400 mt-1 mb-4 flex items-center justify-center gap-1.5 font-medium"><span class="inline-block h-2 w-2 rounded-full bg-amber-500 animate-ping"></span> ' . e(__('whatsapp-bridge-settings::messages.status.waiting')) . '… Open WhatsApp > Linked Devices > Link a Device</p>' .
-                    $qrContent .
+                '<div wire:poll.2s="checkStatus" class="mt-4 p-5 bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-500/30 shadow-xs text-center flex flex-col items-center justify-center">'.
+                    '<h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">'.e(__('whatsapp-bridge-settings::messages.qr.qr_scan_title')).'</h4>'.
+                    '<p class="text-xs text-amber-600 dark:text-amber-400 mt-1 mb-4 flex items-center justify-center gap-1.5 font-medium"><span class="inline-block h-2 w-2 rounded-full bg-amber-500 animate-ping"></span> '.e(__('whatsapp-bridge-settings::messages.status.waiting')).'… Open WhatsApp > Linked Devices > Link a Device</p>'.
+                    $qrContent.
                 '</div>';
         }
 
         // ── Assemble Dashboard Grid ─────────────────────────────────────────────
         $dashboardHtml =
-            '<div class="bg-slate-50/70 dark:bg-gray-900/40 p-4 sm:p-5 rounded-2xl border border-gray-200/80 dark:border-gray-800 space-y-4">' .
+            '<div class="bg-slate-50/70 dark:bg-gray-900/40 p-4 sm:p-5 rounded-2xl border border-gray-200/80 dark:border-gray-800 space-y-4">'.
 
                 // Header / Live Indicator Row
-                '<div class="flex items-center justify-between pb-1 border-b border-gray-200/60 dark:border-gray-800">' .
-                    '<div class="flex items-center gap-2">' .
-                        '<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">' . e(__('whatsapp-bridge-settings::messages.bridge.overview_title')) . '</span>' .
-                    '</div>' .
-                    '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20">' .
-                        '<span class="relative inline-flex h-2 w-2">' .
-                            '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>' .
-                            '<span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>' .
-                        '</span>' .
-                        e(__('whatsapp-bridge-settings::messages.bridge.live_badge')) .
-                    '</span>' .
-                '</div>' .
+                '<div class="flex items-center justify-between pb-1 border-b border-gray-200/60 dark:border-gray-800">'.
+                    '<div class="flex items-center gap-2">'.
+                        '<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">'.e(__('whatsapp-bridge-settings::messages.bridge.overview_title')).'</span>'.
+                    '</div>'.
+                    '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20">'.
+                        '<span class="relative inline-flex h-2 w-2">'.
+                            '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>'.
+                            '<span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>'.
+                        '</span>'.
+                        e(__('whatsapp-bridge-settings::messages.bridge.live_badge')).
+                    '</span>'.
+                '</div>'.
 
                 // 3 Mini Cards Grid
-                '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">' .
+                '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">'.
 
                     // 1. Bridge API Card
-                    '<div class="bg-white dark:bg-gray-800/90 rounded-xl p-4 border border-gray-200/80 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 flex flex-col justify-between space-y-3">' .
-                        '<div>' .
-                            '<div class="flex items-center justify-between mb-3">' .
-                                '<div class="flex items-center gap-2.5">' .
-                                    '<div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">' .
-                                        '<svg style="width:16px!important;height:16px!important;max-width:16px!important;max-height:16px!important;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>' .
-                                    '</div>' .
-                                    '<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">' . e(__('whatsapp-bridge-settings::messages.bridge.bridge_api_title')) . '</span>' .
-                                '</div>' .
-                            '</div>' .
-                            '<div>' .
-                                '<span class="' . $apiBadge . '">' . $apiDot . e($apiStatusText) . '</span>' .
-                            '</div>' .
-                        '</div>' .
-                        '<div class="pt-2 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">' .
-                            '<span class="font-mono text-gray-400 dark:text-gray-500 truncate max-w-40" title="' . e($cleanDisplayUrl) . '">' . e($cleanDisplayUrl) . '</span>' .
-                            $latencyHtml .
-                        '</div>' .
-                    '</div>' .
+                    '<div class="bg-white dark:bg-gray-800/90 rounded-xl p-4 border border-gray-200/80 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 flex flex-col justify-between space-y-3">'.
+                        '<div>'.
+                            '<div class="flex items-center justify-between mb-3">'.
+                                '<div class="flex items-center gap-2.5">'.
+                                    '<div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">'.
+                                        '<svg style="width:16px!important;height:16px!important;max-width:16px!important;max-height:16px!important;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>'.
+                                    '</div>'.
+                                    '<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">'.e(__('whatsapp-bridge-settings::messages.bridge.bridge_api_title')).'</span>'.
+                                '</div>'.
+                            '</div>'.
+                            '<div>'.
+                                '<span class="'.$apiBadge.'">'.$apiDot.e($apiStatusText).'</span>'.
+                            '</div>'.
+                        '</div>'.
+                        '<div class="pt-2 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">'.
+                            '<span class="font-mono text-gray-400 dark:text-gray-500 truncate max-w-40" title="'.e($cleanDisplayUrl).'">'.e($cleanDisplayUrl).'</span>'.
+                            $latencyHtml.
+                        '</div>'.
+                    '</div>'.
 
                     // 2. WhatsApp Session Card
-                    '<div class="bg-white dark:bg-gray-800/90 rounded-xl p-4 border border-gray-200/80 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 flex flex-col justify-between space-y-3">' .
-                        '<div>' .
-                            '<div class="flex items-center justify-between mb-3">' .
-                                '<div class="flex items-center gap-2.5">' .
-                                    '<div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">' .
-                                        '<svg style="width:16px!important;height:16px!important;max-width:16px!important;max-height:16px!important;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>' .
-                                    '</div>' .
-                                    '<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">' . e(__('whatsapp-bridge-settings::messages.bridge.whatsapp_title')) . '</span>' .
-                                '</div>' .
-                            '</div>' .
-                            '<div>' .
-                                '<span class="' . $waBadgeClass . '">' . $waDot . e($waStatusLabel) . '</span>' .
-                            '</div>' .
-                        '</div>' .
-                        '<div class="pt-2 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">' .
-                            '<span class="font-medium text-gray-700 dark:text-gray-300 font-mono">' . e($cleanPhone) . '</span>' .
-                            '<span class="text-gray-400 dark:text-gray-500">' . e($sessionStatusText) . '</span>' .
-                        '</div>' .
-                    '</div>' .
+                    '<div class="bg-white dark:bg-gray-800/90 rounded-xl p-4 border border-gray-200/80 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 flex flex-col justify-between space-y-3">'.
+                        '<div>'.
+                            '<div class="flex items-center justify-between mb-3">'.
+                                '<div class="flex items-center gap-2.5">'.
+                                    '<div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">'.
+                                        '<svg style="width:16px!important;height:16px!important;max-width:16px!important;max-height:16px!important;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>'.
+                                    '</div>'.
+                                    '<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">'.e(__('whatsapp-bridge-settings::messages.bridge.whatsapp_title')).'</span>'.
+                                '</div>'.
+                            '</div>'.
+                            '<div>'.
+                                '<span class="'.$waBadgeClass.'">'.$waDot.e($waStatusLabel).'</span>'.
+                            '</div>'.
+                        '</div>'.
+                        '<div class="pt-2 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">'.
+                            '<span class="font-medium text-gray-700 dark:text-gray-300 font-mono">'.e($cleanPhone).'</span>'.
+                            '<span class="text-gray-400 dark:text-gray-500">'.e($sessionStatusText).'</span>'.
+                        '</div>'.
+                    '</div>'.
 
                     // 3. Instance Card
-                    '<div class="bg-white dark:bg-gray-800/90 rounded-xl p-4 border border-gray-200/80 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 flex flex-col justify-between space-y-3">' .
-                        '<div>' .
-                            '<div class="flex items-center justify-between mb-3">' .
-                                '<div class="flex items-center gap-2.5">' .
-                                    '<div class="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">' .
-                                        '<svg style="width:16px!important;height:16px!important;max-width:16px!important;max-height:16px!important;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>' .
-                                    '</div>' .
-                                    '<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">' . e(__('whatsapp-bridge-settings::messages.bridge.instance_title')) . '</span>' .
-                                '</div>' .
-                            '</div>' .
-                            '<div>' .
-                                '<span class="font-mono text-sm font-semibold text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 rounded">' . e($senderId) . '</span>' .
-                            '</div>' .
-                        '</div>' .
-                        '<div class="pt-2 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">' .
-                            '<span class="text-gray-400 dark:text-gray-500">Instance ID</span>' .
-                            '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400">' . e(__('whatsapp-bridge-settings::messages.bridge.active_instance')) . '</span>' .
-                        '</div>' .
-                    '</div>' .
+                    '<div class="bg-white dark:bg-gray-800/90 rounded-xl p-4 border border-gray-200/80 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 flex flex-col justify-between space-y-3">'.
+                        '<div>'.
+                            '<div class="flex items-center justify-between mb-3">'.
+                                '<div class="flex items-center gap-2.5">'.
+                                    '<div class="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">'.
+                                        '<svg style="width:16px!important;height:16px!important;max-width:16px!important;max-height:16px!important;" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>'.
+                                    '</div>'.
+                                    '<span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">'.e(__('whatsapp-bridge-settings::messages.bridge.instance_title')).'</span>'.
+                                '</div>'.
+                            '</div>'.
+                            '<div>'.
+                                '<span class="font-mono text-sm font-semibold text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 rounded">'.e($senderId).'</span>'.
+                            '</div>'.
+                        '</div>'.
+                        '<div class="pt-2 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">'.
+                            '<span class="text-gray-400 dark:text-gray-500">Instance ID</span>'.
+                            '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400">'.e(__('whatsapp-bridge-settings::messages.bridge.active_instance')).'</span>'.
+                        '</div>'.
+                    '</div>'.
 
-                '</div>' .
+                '</div>'.
 
-                $warningAlert .
+                $warningAlert.
 
-                $qrSection .
+                $qrSection.
 
             '</div>';
 
         return new HtmlString($dashboardHtml);
     }
 }
-

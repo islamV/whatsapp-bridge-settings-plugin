@@ -34,7 +34,7 @@ class InstallTailwindSourcesCommand extends Command
         }
 
         // No Filament theme found — fall back to the generic CSS file
-        $this->line('  <comment>No Filament panel themes found. Falling back to: ' . $this->option('css') . '</comment>');
+        $this->line('  <comment>No Filament panel themes found. Falling back to: '.$this->option('css').'</comment>');
         $this->newLine();
 
         return $this->injectIntoFile(
@@ -121,15 +121,15 @@ class InstallTailwindSourcesCommand extends Command
         }
 
         // ── Smart insertion: after last existing @source, else append ─────────
-        $block = "\n" . $toAdd->join("\n") . "\n";
+        $block = "\n".$toAdd->join("\n")."\n";
 
         if (preg_match('/^@source [^\n]+\n/m', $contents)) {
             preg_match_all('/^@source [^\n]+\n/m', $contents, $matches, PREG_OFFSET_CAPTURE);
-            $lastMatch   = end($matches[0]);
-            $insertAt    = $lastMatch[1] + strlen($lastMatch[0]);
-            $newContents = substr($contents, 0, $insertAt) . $block . substr($contents, $insertAt);
+            $lastMatch = end($matches[0]);
+            $insertAt = $lastMatch[1] + strlen($lastMatch[0]);
+            $newContents = substr($contents, 0, $insertAt).$block.substr($contents, $insertAt);
         } else {
-            $newContents = rtrim($contents) . "\n" . $block;
+            $newContents = rtrim($contents)."\n".$block;
         }
 
         file_put_contents($absolutePath, $newContents);
