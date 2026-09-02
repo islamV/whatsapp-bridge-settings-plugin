@@ -112,6 +112,8 @@ class FailedJobProvider implements FailedJobProviderInterface, CountableFailedJo
      *
      * @param  mixed  $id
      * @return object|null
+     *
+     * @throws \JsonException
      */
     public function find($id)
     {
@@ -144,14 +146,12 @@ class FailedJobProvider implements FailedJobProviderInterface, CountableFailedJo
             return false;
         }
 
-        $this->events->emit([
+        return $this->events->emit([
             '_cloud_event' => 'failed_job',
             'id' => $job->id,
             'queue' => $job->queue,
             'retried_at' => CarbonImmutable::now('UTC')->toDateTimeString('microsecond'),
         ]);
-
-        return true;
     }
 
     /**

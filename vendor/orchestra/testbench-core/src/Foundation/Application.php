@@ -15,6 +15,7 @@ use Illuminate\Foundation\Bootstrap\RegisterProviders;
 use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Foundation\Console\ChannelListCommand;
 use Illuminate\Foundation\Console\RouteListCommand;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
 use Illuminate\Foundation\Http\Middleware\TrimStrings;
@@ -34,6 +35,7 @@ use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Validator;
 use Illuminate\View\Component;
+use Orchestra\Sidekick\Env;
 use Orchestra\Testbench\Concerns\CreatesApplication;
 use Orchestra\Testbench\Console\Commander;
 use Orchestra\Testbench\Contracts\Config as ConfigContract;
@@ -229,6 +231,7 @@ class Application
         ConvertEmptyStringsToNull::flushState();
         EncodedHtmlString::flushState();
         Factory::flushState();
+        FormRequest::flushState();
 
         if (! $instance instanceof Commander) {
             HandleExceptions::flushState($instance);
@@ -255,9 +258,7 @@ class Application
         SchemaBuilder::$defaultMorphKeyType = 'int';
         Signals::resolveAvailabilityUsing(null); // @phpstan-ignore argument.type
         Sleep::fake(false);
-        Str::createRandomStringsNormally();
-        Str::createUlidsNormally();
-        Str::createUuidsNormally();
+        Str::resetFactoryState();
         ThrottleRequests::shouldHashKeys();
         TrimStrings::flushState();
         TrustProxies::flushState();

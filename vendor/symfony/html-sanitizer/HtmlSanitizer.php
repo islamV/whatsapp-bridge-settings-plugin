@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\HtmlSanitizer;
 
+use Symfony\Component\HtmlSanitizer\Parser\MastermindsParser;
 use Symfony\Component\HtmlSanitizer\Parser\NativeParser;
 use Symfony\Component\HtmlSanitizer\Parser\ParserInterface;
 use Symfony\Component\HtmlSanitizer\Reference\W3CReference;
@@ -33,7 +34,7 @@ final class HtmlSanitizer implements HtmlSanitizerInterface
         private HtmlSanitizerConfig $config,
         ?ParserInterface $parser = null,
     ) {
-        $this->parser = $parser ?? new NativeParser();
+        $this->parser = $parser ?? (\PHP_VERSION_ID < 80400 ? new MastermindsParser() : new NativeParser());
     }
 
     public function sanitize(string $input): string
@@ -67,7 +68,7 @@ final class HtmlSanitizer implements HtmlSanitizerInterface
         }
 
         // Remove NULL character and HTML entities for null byte
-        $input = str_replace(\chr(0), '�', $input);
+        $input = str_replace([\chr(0), '&#0;', '&#x00;', '&#X00;', '&#000;'], '�', $input);
 
         // Parse as HTML
         if ('' === trim($input) || !$parsed = $this->parser->parse($input, $element)) {

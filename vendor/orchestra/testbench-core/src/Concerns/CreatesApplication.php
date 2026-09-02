@@ -543,10 +543,6 @@ trait CreatesApplication
                 $this->defineEnvironment($app);
                 $this->getEnvironmentSetUp($app);
             },
-            annotation: function () use ($app) {
-                $this->parseTestMethodAnnotations($app, 'environment-setup'); /** @phpstan-ignore method.notFound */
-                $this->parseTestMethodAnnotations($app, 'define-env'); /** @phpstan-ignore method.notFound */
-            },
             attribute: function () use ($app) {
                 $this->parseTestMethodAttributes($app, WithImmutableDates::class); /** @phpstan-ignore method.notFound */
                 $this->parseTestMethodAttributes($app, DefineEnvironment::class); /** @phpstan-ignore method.notFound */
@@ -569,7 +565,7 @@ trait CreatesApplication
         $app->make('Illuminate\Foundation\Bootstrap\BootProviders')->bootstrap($app);
 
         foreach ($this->getPackageBootstrappers($app) as $bootstrap) {
-            $app->make($bootstrap)->bootstrap($app);
+            $app->make($bootstrap)->bootstrap($app); /** @phpstan-ignore method.notFound */
         }
 
         $app->make(ConsoleKernelContract::class)->bootstrap();
