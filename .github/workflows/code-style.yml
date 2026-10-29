@@ -18,14 +18,14 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2.40.0
         with:
           php-version: '8.3'
           extensions: dom, curl, libxml, mbstring, zip
           coverage: none
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v4
+        uses: ramsey/composer-install@26d8a556604053a9612623447203a691f406fbe6 # v4
 
       - name: Run Pint
         run: php vendor/bin/pint --test
