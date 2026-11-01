@@ -21,6 +21,7 @@ class WhatsappBridgeSettingsPluginServiceProvider extends PackageServiceProvider
         $package->name(static::$name)
             ->hasConfigFile('whatsapp-bridge-settings')
             ->hasMigration('create_whatsapp_bridge_settings_table')
+            ->hasMigration('create_whatsapp_bridge_instances_table')
             ->hasViews()
             ->hasTranslations()
             ->hasCommands([

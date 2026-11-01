@@ -10,6 +10,7 @@ use Islamv\WhatsappBridgeSettingsPlugin\Concerns\HandlesOtpMessages;
 use Islamv\WhatsappBridgeSettingsPlugin\Concerns\HasLogChannel;
 use Islamv\WhatsappBridgeSettingsPlugin\Concerns\ManagesPhoneNumbers;
 use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
+use Islamv\WhatsappBridgeSettingsPlugin\Settings\WhatsappBridgeInstanceRepository;
 use Islamv\WhatsappBridgeSettingsPlugin\Settings\WhatsappSettingsRepository;
 
 class WhatsappBridge implements WhatsappProviderInterface
@@ -19,12 +20,13 @@ class WhatsappBridge implements WhatsappProviderInterface
     use ManagesPhoneNumbers;
 
     public function __construct(
-        protected WhatsappSettingsRepository $settings
+        protected WhatsappSettingsRepository $settings,
+        protected ?WhatsappBridgeInstanceRepository $instances = null
     ) {}
 
     public function sendMessage(string $to, string $message, array $options = []): bool
     {
-        $config = $this->settings->getProviderConfig('bridge');
+        $config = $this->resolveBridgeConfig($options);
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             Log::channel($this->logChannel())->warning('WhatsApp bridge not configured');
@@ -91,6 +93,59 @@ class WhatsappBridge implements WhatsappProviderInterface
         }
     }
 
+    public function sendText(string $to, string $message, array $options = []): bool
+    {
+        return $this->sendMessageType($to, 'text', ['text' => $message], $options);
+    }
+
+    public function sendButtons(string $to, string $text, array $buttons, array $options = []): bool
+    {
+        return $this->sendMessageType($to, 'buttons', ['text' => $text, 'buttons' => $buttons], $options);
+    }
+
+    public function sendPoll(string $to, string $name, array $pollOptions, int $selectableCount = 1, array $options = []): bool
+    {
+        return $this->sendMessageType($to, 'poll', ['poll' => ['name' => $name, 'options' => $pollOptions, 'selectableCount' => $selectableCount]], $options);
+    }
+
+    public function sendMedia(string $to, string $url, ?string $caption = null, array $options = []): bool
+    {
+        return $this->sendMessageType($to, 'media', ['media' => array_filter(['url' => $url, 'caption' => $caption])], $options);
+    }
+
+    public function sendMessageType(string $to, string $type, array $payload = [], array $options = []): bool
+    {
+        $config = $this->resolveBridgeConfig($options);
+        if (empty($config['api_base_url']) || empty($config['api_token'])) {
+            return false;
+        }
+
+        $phone = $this->normalizePhone($to, $this->getDefaultCountryCode());
+        $body = array_merge(['to' => $phone, 'type' => $type], $payload);
+
+        try {
+            $response = Http::timeout((int) ($config['timeout'] ?? 30))
+                ->withToken((string) $config['api_token'])
+                ->post($this->buildTypedUrl($config), $body);
+
+            if (! $response->successful() && $type === 'text') {
+                $response = $this->requestWithFallback(
+                    $config,
+                    fn () => Http::timeout((int) ($config['timeout'] ?? 30))->post($this->buildSessionUrl($config, 'send-message'), ['phone' => $phone, 'message' => $payload['text'] ?? '']),
+                    fn () => Http::timeout((int) ($config['timeout'] ?? 30))->withToken((string) $config['api_token'])->post(rtrim((string) $config['api_base_url'], '/').'/messages', ['to' => $phone, 'text' => $payload['text'] ?? '', 'sender' => $config['sender'] ?? null])
+                );
+            }
+
+            $json = $response->json() ?? [];
+
+            return $response->successful() || ! empty($json['success']) || ! empty($json['id']) || ! empty($json['messageId']);
+        } catch (\Throwable $e) {
+            Log::channel($this->logChannel())->error('WhatsApp typed message exception', ['message' => $e->getMessage(), 'type' => $type, 'to' => $this->maskPhone($phone)]);
+
+            return false;
+        }
+    }
+
     public function sendOtp(string $to, string $otp, array $options = []): bool
     {
         $message = $this->buildOtpMessage($otp);
@@ -113,7 +168,7 @@ class WhatsappBridge implements WhatsappProviderInterface
     public function checkBridgeHealth(?string $baseUrl = null): array
     {
         if ($baseUrl === null) {
-            $config = $this->settings->getProviderConfig('bridge');
+            $config = $this->resolveBridgeConfig();
             $baseUrl = $config['api_base_url'] ?? null;
         }
 
@@ -154,7 +209,7 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     public function getConnectionStatus(): string
     {
-        $config = $this->settings->getProviderConfig('bridge');
+        $config = $this->resolveBridgeConfig();
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             return 'disconnected';
@@ -188,7 +243,7 @@ class WhatsappBridge implements WhatsappProviderInterface
      */
     public function generateQrCodeResult(): array
     {
-        $config = $this->settings->getProviderConfig('bridge');
+        $config = $this->resolveBridgeConfig();
 
         if (empty($config['api_base_url']) || empty($config['api_token'])) {
             return ['qrcode' => null, 'reason' => 'not_configured'];
@@ -264,7 +319,7 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     public function disconnect(): bool
     {
-        $config = $this->settings->getProviderConfig('bridge');
+        $config = $this->resolveBridgeConfig();
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             return false;
@@ -292,7 +347,7 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     public function getConnectedPhone(): ?string
     {
-        $config = $this->settings->getProviderConfig('bridge');
+        $config = $this->resolveBridgeConfig();
 
         if (! $config['api_base_url'] || ! $config['api_token']) {
             return null;
@@ -320,6 +375,23 @@ class WhatsappBridge implements WhatsappProviderInterface
         }
     }
 
+    protected function resolveBridgeConfig(array $options = []): array
+    {
+        $repo = $this->instances ?? app(WhatsappBridgeInstanceRepository::class);
+        $selected = $options['instance_id'] ?? $options['instance'] ?? null;
+        $instance = $selected !== null ? $repo->find($selected) : $repo->default();
+        if ($instance !== null) {
+            return $instance;
+        }
+
+        return $this->settings->getProviderConfig('bridge');
+    }
+
+    protected function buildTypedUrl(array $config): string
+    {
+        return rtrim((string) $config['api_base_url'], '/').'/api/'.rawurlencode((string) $config['api_token']).'/send/'.rawurlencode($this->getSessionName($config));
+    }
+
     protected function getDefaultCountryCode(): string
     {
         return (string) $this->settings->get('default_country_code', '20');
@@ -327,7 +399,7 @@ class WhatsappBridge implements WhatsappProviderInterface
 
     protected function getSessionName(array $config): string
     {
-        return trim((string) ($config['sender'] ?? 'default')) ?: 'default';
+        return trim((string) ($config['session_name'] ?? $config['sender'] ?? 'default')) ?: 'default';
     }
 
     protected function buildSessionUrl(array $config, string $action): string
