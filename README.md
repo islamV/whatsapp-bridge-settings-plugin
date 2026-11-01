@@ -318,3 +318,19 @@ See [SECURITY.md](SECURITY.md) for security policies and vulnerability reporting
 ## License
 
 The MIT License (MIT). See [LICENSE](LICENSE) for more information.
+
+## Bridge instances and typed messages
+
+Bridge connections can be stored as named instances. Each instance may use a different bridge URL/API token and WhatsApp session name; the first enabled instance becomes the default when none is selected.
+
+```php
+$whatsapp->sendText('201000000000', 'Hello');
+$whatsapp->sendButtons('201000000000', 'Choose an option', [
+    ['id' => 'confirm', 'title' => 'Confirm'],
+    ['id' => 'cancel', 'title' => 'Cancel'],
+], ['instance_id' => 2]);
+$whatsapp->sendPoll('201000000000', 'Preferred time', ['Morning', 'Evening']);
+$whatsapp->sendMedia('201000000000', 'https://example.com/invoice.pdf', 'Your invoice');
+```
+
+The Bridge service accepts the typed envelope at `POST /api/:secret/send/:session` and exposes session metadata at `GET /api/:secret/sessions`. The existing `send-message` endpoint remains available for legacy text integrations.

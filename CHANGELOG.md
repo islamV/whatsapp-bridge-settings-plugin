@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.11] - 2026-11-01
+
+### Added
+- Named bridge instances with encrypted per-instance credentials and session names.
+- Filament instance management and typed test-message payloads.
+- Text, buttons, poll, and media message APIs with legacy text compatibility.
+- Session management and typed-message bridge API documentation.
+
 ## [1.0.0] - 2026-07-05
 
 ### Added

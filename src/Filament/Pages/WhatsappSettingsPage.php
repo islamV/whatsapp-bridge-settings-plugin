@@ -26,6 +26,7 @@ use Illuminate\Support\HtmlString;
 use Islamv\WhatsappBridgeSettingsPlugin\Contracts\WhatsappProviderInterface;
 use Islamv\WhatsappBridgeSettingsPlugin\Enums\WhatsappProvider;
 use Islamv\WhatsappBridgeSettingsPlugin\Services\WhatsappBridge;
+use Islamv\WhatsappBridgeSettingsPlugin\Settings\WhatsappBridgeInstanceRepository;
 use Islamv\WhatsappBridgeSettingsPlugin\Settings\WhatsappSettingsRepository;
 
 /**
@@ -60,6 +61,8 @@ class WhatsappSettingsPage extends Page implements HasForms
      * Shape: ['reachable' => bool, 'status' => string|null, 'latency_ms' => int|null, 'url' => string|null]
      */
     public array $bridgeHealth = ['reachable' => false, 'status' => null, 'latency_ms' => null, 'url' => null];
+
+    public ?int $instanceId = null;
 
     public function mount(): void
     {
@@ -128,6 +131,28 @@ class WhatsappSettingsPage extends Page implements HasForms
                         Tab::make(__('whatsapp-bridge-settings::messages.tabs.bridge'))
                             ->icon('heroicon-o-link')
                             ->schema([
+
+                                Section::make('Bridge instances')
+                                    ->description('Manage multiple bridge servers and WhatsApp sessions.')
+                                    ->columns(2)
+                                    ->schema([
+                                        Select::make('bridge_instance_id')
+                                            ->label('Active instance')
+                                            ->options(fn (): array => $this->getInstanceOptions())
+                                            ->live()
+                                            ->afterStateUpdated(function ($state): void {
+                                                $this->instanceId = $state ? (int) $state : null;
+                                                $this->checkStatus();
+                                            }),
+                                        TextInput::make('bridge_instance_name')->label('Instance name')->default('Default'),
+                                        TextInput::make('bridge_session_name')->label('WhatsApp session')->default('default'),
+                                        Toggle::make('bridge_instance_enabled')->label('Enabled')->default(true),
+                                        Actions::make([
+                                            Action::make('saveInstance')->label('Save instance')->color('success')->action('saveInstance'),
+                                            Action::make('setDefaultInstance')->label('Set default')->action('setDefaultInstance'),
+                                            Action::make('deleteInstance')->label('Delete')->color('danger')->requiresConfirmation()->action('deleteInstance'),
+                                        ])->columnSpanFull(),
+                                    ]),
 
                                 // ── Connection Overview ──────────────────────────────────────────
                                 Section::make(__('whatsapp-bridge-settings::messages.bridge.overview_title'))
@@ -297,6 +322,23 @@ class WhatsappSettingsPage extends Page implements HasForms
                 ->modalWidth('lg')
                 ->form([
                     Grid::make(12)->schema([
+                        Select::make('instance_id')
+                            ->label('Bridge instance')
+                            ->options(fn (): array => $this->getInstanceOptions())
+                            ->placeholder('Default instance')
+                            ->columnSpanFull(),
+                        Select::make('message_type')
+                            ->label('Message type')
+                            ->options([
+                                'text' => 'Text',
+                                'buttons' => 'Buttons',
+                                'poll' => 'Poll',
+                                'media' => 'Media',
+                            ])
+                            ->default('text')
+                            ->required()
+                            ->live()
+                            ->columnSpanFull(),
                         Select::make('country_code')
                             ->label(__('whatsapp-bridge-settings::messages.test_form.country_code'))
                             ->options([
@@ -377,6 +419,12 @@ class WhatsappSettingsPage extends Page implements HasForms
                         ->rows(3)
                         ->maxLength(1000),
 
+                    Textarea::make('typed_payload')
+                        ->label('Typed payload (JSON)')
+                        ->helperText('For buttons, poll, or media. Example: {"buttons":[{"id":"yes","title":"Yes"}]}')
+                        ->rows(4)
+                        ->nullable(),
+
                     ViewField::make('whatsapp_preview')
                         ->view('whatsapp-bridge-settings::test-message-modal-preview')
                         ->columnSpanFull(),
@@ -397,10 +445,20 @@ class WhatsappSettingsPage extends Page implements HasForms
                         $fullPhone = $cc.$rawPhone;
                     }
 
-                    $success = $whatsapp->sendMessage(
-                        $fullPhone,
-                        $data['test_message']
-                    );
+                    $type = $data['message_type'] ?? 'text';
+                    $typedPayload = [];
+                    if (! empty($data['typed_payload'])) {
+                        $typedPayload = json_decode($data['typed_payload'], true);
+                        if (! is_array($typedPayload)) {
+                            Notification::make()->title('Typed payload must be valid JSON')->danger()->send();
+
+                            return;
+                        }
+                    }
+                    $typedPayload = array_merge(['text' => $data['test_message'] ?? ''], $typedPayload);
+                    $success = $whatsapp instanceof WhatsappBridge
+                        ? $whatsapp->sendMessageType($fullPhone, $type, $typedPayload, ['instance_id' => $data['instance_id'] ?? null])
+                        : $whatsapp->sendMessage($fullPhone, $data['test_message']);
 
                     Notification::make()
                         ->title($success
@@ -425,6 +483,48 @@ class WhatsappSettingsPage extends Page implements HasForms
 
         $this->fillForm();
         $this->checkStatus();
+    }
+
+    public function saveInstance(): void
+    {
+        $state = $this->form->getState();
+        $config = $state['providers']['bridge'] ?? [];
+        app(WhatsappBridgeInstanceRepository::class)->save([
+            'name' => $state['bridge_instance_name'] ?? 'Default',
+            'api_base_url' => $config['api_base_url'] ?? '',
+            'api_token' => $config['api_token'] ?? null,
+            'session_name' => $state['bridge_session_name'] ?? 'default',
+            'sender' => $config['sender'] ?? null,
+            'timeout' => $config['timeout'] ?? 30,
+            'enabled' => $state['bridge_instance_enabled'] ?? true,
+            'is_default' => $this->instanceId === null,
+        ], $this->instanceId);
+        $this->fillForm();
+        Notification::make()->title('Bridge instance saved')->success()->send();
+    }
+
+    public function setDefaultInstance(): void
+    {
+        if ($this->instanceId === null) {
+            return;
+        }
+        $repository = app(WhatsappBridgeInstanceRepository::class);
+        $instance = $repository->find($this->instanceId);
+        if ($instance) {
+            $instance['is_default'] = true;
+            $repository->save($instance, $this->instanceId);
+        }
+        $this->fillForm();
+    }
+
+    public function deleteInstance(): void
+    {
+        if ($this->instanceId === null) {
+            return;
+        }
+        app(WhatsappBridgeInstanceRepository::class)->delete($this->instanceId);
+        $this->instanceId = null;
+        $this->fillForm();
     }
 
     public function saveBridge(): void
@@ -614,7 +714,30 @@ class WhatsappSettingsPage extends Page implements HasForms
                 'meta' => $metaConfig,
                 'twilio' => $twilioConfig,
             ],
+            'bridge_instance_id' => $this->instanceId,
+            'bridge_instance_name' => 'Default',
+            'bridge_session_name' => 'default',
+            'bridge_instance_enabled' => true,
         ]);
+
+        $instance = $this->instanceId ? app(WhatsappBridgeInstanceRepository::class)->find($this->instanceId) : app(WhatsappBridgeInstanceRepository::class)->default();
+        if ($instance) {
+            $this->instanceId = (int) $instance['id'];
+            $this->form->fill([
+                'bridge_instance_id' => $this->instanceId,
+                'bridge_instance_name' => $instance['name'],
+                'bridge_session_name' => $instance['session_name'],
+                'bridge_instance_enabled' => (bool) $instance['enabled'],
+                'providers.bridge' => array_replace($bridgeConfig, $instance),
+            ]);
+        }
+    }
+
+    protected function getInstanceOptions(): array
+    {
+        return collect(app(WhatsappBridgeInstanceRepository::class)->all())
+            ->mapWithKeys(fn (array $instance): array => [$instance['id'] => $instance['name'].' ('.$instance['session_name'].')'])
+            ->all();
     }
 
     protected function getProviderOptions(): array
